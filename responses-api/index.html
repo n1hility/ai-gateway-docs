@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Responses API -- Pipeline Flow</title>
+<title>AI Inference Gateway -- Flow Visualizer</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
@@ -39,6 +39,10 @@ body.light .step.pending{color:#b0b8c1}
 .step.done{color:#3fb950}
 .step.done .step-mk::before{content:'\2713'}
 .step .step-mk::before{content:'\25CB'}
+.step.skipped{color:#484f58;text-decoration:line-through;opacity:.5;font-style:italic}
+body.light .step.skipped{color:#b0b8c1}
+.step.skipped .step-mk::before{content:'\2298'}
+.step.skipped:hover{color:#484f58;background:transparent;transform:none;border-left:none;padding-left:4px;cursor:default}
 
 .insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
 .insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
@@ -54,19 +58,15 @@ body.light .insp-line.del{background:#ffebe9;color:#82071e}
 body.light .insp-line.err{background:#ffebe9;color:#82071e}
 .insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
 body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
-.insp-line.guard{background:#2d1f0f;color:#f0883e;border-left:3px solid #f0883e;animation:pulse .8s}
-body.light .insp-line.guard{background:#fff3e0;color:#8a5700}
-.insp-line.blocked{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:700;animation:pulse .8s}
-body.light .insp-line.blocked{background:#ffebe9;color:#82071e}
 @keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
 .insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
 body.light .insp-plugin{background:#8250df15;color:#8250df}
 
-/* Theme toggle */
+/* Theme toggle — top-right of main panel */
 .theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 
-/* Red Hat logo */
+/* Red Hat logo — top-left branding */
 .rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
 .rh-brand img{height:30px}
 .rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
@@ -87,7 +87,6 @@ body.light .legend{background:#f6f8fa;border-color:#d0d7de}
 .steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
 .steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
-
 /* Mobile splash */
 .mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
 .mobile-splash.show{display:flex}
@@ -108,7 +107,6 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 .mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
 .mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
 .mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
-.mobile-splash .stat.gold{color:#e3b341;border-color:#e3b34144}
 .mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
 .mobile-splash .rh-logo img{height:24px}
 .mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
@@ -120,15 +118,15 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div class="mobile-splash show" id="mobile-splash">
   <canvas id="mobile-canvas"></canvas>
   <div class="mobile-splash-content">
-    <div class="rh-logo"><img src="../redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
-    <div class="badge"><span>Responses API</span> Pipeline</div>
-    <h1>Responses API<br><span class="grad">Pipeline Flow</span></h1>
-    <p class="sub">Interactive animated pipeline visualizer<br>for the Responses API processing stages</p>
+    <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>RHOAI 3.5–3.7</span> GA</div>
+    <h1>AI Inference Gateway<br><span class="grad">MaaS in Action</span></h1>
+    <p class="sub">Interactive animated architecture flow<br>for the AI Inference Gateway</p>
     <div class="stats">
-      <div class="stat blue">3 Flows</div>
-      <div class="stat green">21 Steps</div>
-      <div class="stat gold">Agentic Loop</div>
-      <div class="stat purple">16 Stages</div>
+      <div class="stat blue">9 Flows</div>
+      <div class="stat green">5 Providers</div>
+      <div class="stat orange">88 Steps</div>
+      <div class="stat purple">40+ Components</div>
     </div>
     <div class="laptop-msg">
       <div class="laptop-icon">&#128187;</div>
@@ -137,22 +135,31 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
-<div class="rh-brand"><img src="../redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">Responses API &mdash; Pipeline Flow <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
 
 <div class="right-panel">
-  <div class="flow-bar" style="flex-direction:column;align-items:stretch;gap:8px">
+  <div class="flow-bar">
     <select id="flow-select">
-      <option value="simple">Agentic Loop (Tool Call)</option>
-      <option value="blocked">Input Guardrails Block</option>
+      <optgroup label="Chat Completions API">
+        <option value="ext">External Model (Anthropic)</option>
+        <option value="inc">Internal Model (llm-d)</option>
+        <option value="auth">Auth Failure (401)</option>
+        <option value="rl">Rate Limit (429)</option>
+      </optgroup>
+      <optgroup label="Responses API">
+        <option value="resp_simple">Simple Completion</option>
+        <option value="resp_rag">RAG + Conversation</option>
+        <option value="resp_mcp">MCP Agent Loop</option>
+        <option value="resp_bg">Background Processing</option>
+        <option value="resp_full">Full Advanced</option>
+      </optgroup>
     </select>
-    <div style="display:flex;gap:6px">
-      <button class="start" onclick="run()">&#9654; Start</button>
-      <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
-      <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
-      <button class="rst" onclick="doReset()">Reset</button>
-    </div>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
+    <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
     <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
@@ -167,7 +174,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
 <div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
   <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
-    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">&#10005;</button>
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
     <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
     <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
     <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
@@ -179,12 +186,10 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div class="legend">
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Hydration</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Inference</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Guardrails</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Agentic Loop</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>Tools</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div>Utility</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>IPP / Agentic Loop</div>
+  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#58a6ff,#3fb950);border-radius:50%"></div>Req / Resp Plugins</div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -194,11 +199,12 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
 let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
-let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopMode = false;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
-let snapshots = [];
+let snapshots = []; // State snapshot after each step completes
 
-const LW = 1140, LH = 700;
+// Logical canvas dimensions
+const LW = 1250, LH = 1050;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -212,55 +218,113 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  // Row 1 - Hydration (y~70, ABOVE the request row)
-  conn_locker:  { x: 90,  y: 70,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
-  mcp_list:     { x: 260, y: 70,  w: 150, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
-  hydrate:      { x: 470, y: 70,  w: 170, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
-  gp_input:     { x: 700, y: 70,  w: 150, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
-  input_guard:  { x: 910, y: 70,  w: 150, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+  user: { x: -20, y: 155, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  // Row 2 - Request (y~210)
-  client:       { x: 70,  y: 215, w: 90,  h: 50, label: 'Client', type: 'icon' },
-  responses:    { x: 210, y: 205, w: 150, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 15 },
-  auth:         { x: 410, y: 205, w: 120, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
-  input_limit:  { x: 580, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
+  cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
+  aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  // Row 3 - Processing (y~360, spread wider)
-  convert:      { x: 90,  y: 350, w: 150, h: 50, label: 'Connect to Model Router', color: '#3fb950', fs: 11 },
-  inference:    { x: 280, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
-  gp_output:    { x: 470, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
-  guardrails:   { x: 670, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
-  output_limit: { x: 850, y: 350, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+  gw: { x: 250, y: 140, w: 700, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  // Agentic loop area (invisible node for lightup targeting)
-  loop_area:    { x: 70, y: 330, w: 930, h: 210, label: '', color: '#f85149', type: 'hidden' },
+  ipp: { x: 740, y: 260, w: 380, h: 560, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  // Policy plugins
+  auth:      { x: 770, y: 318, w: 320, h: 40, label: 'Auth (Authorino)', sublabel: '(TBD Kuadrant)', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
+  rlimit:    { x: 770, y: 360, w: 320, h: 40, label: 'Rate Limit (Limitador)', sublabel: '(TBD Kuadrant)', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
+  // Request plugins
+  p_rguard:  { x: 770, y: 402, w: 320, h: 40, label: 'guardrails', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, soon: true },
+  p_ims:     { x: 770, y: 444, w: 320, h: 40, label: 'intelligent-model-selection [tbd]', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  p_mpr:     { x: 770, y: 486, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:    { x: 770, y: 524, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bmth:    { x: 770, y: 562, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:  { x: 770, y: 600, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:     { x: 770, y: 638, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  // Response plugins
+  p_at_resp: { x: 770, y: 716, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  p_resp_guard: { x: 770, y: 754, w: 320, h: 40, label: 'guardrails', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
 
-  // Row 4 - Agentic Loop tools (y~480)
-  tool_invoke:  { x: 180, y: 470, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
-  assemble:     { x: 380, y: 470, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
+  // External model — far left, outside cluster
+  anthropic: { x: -40, y: 300, w: 140, h: 55, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 15 },
 
-  // Row 5 - Final (y~580)
-  dehydrate:    { x: 640, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
-  client_resp:  { x: 820, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
+  // External services — left side, targets of agentic loop "External" boundary plugins
+  svc_guardrails:  { x: -55, y: 420, w: 150, h: 40, label: 'NeMo Guardrails', color: '#f0883e', fs: 12 },
+  svc_files:       { x: -55, y: 470, w: 150, h: 40, label: 'File Service', sublabel: '(S3 / Vector Store)', color: '#3fb950', fs: 12 },
+  svc_websearch:   { x: -55, y: 520, w: 150, h: 40, label: 'Web Search', color: '#3fb950', fs: 13, soon: true },
+  svc_mcp:         { x: -55, y: 570, w: 150, h: 40, label: 'MCP Server', color: '#d2a8ff', fs: 13 },
+  svc_conv:        { x: -55, y: 630, w: 150, h: 40, label: 'Conversation', sublabel: 'Store', color: '#3fb950', fs: 13 },
+  svc_resp_store:  { x: -55, y: 680, w: 150, h: 40, label: 'Response Store', color: '#3fb950', fs: 13 },
+
+  // MaaS API — next to Auth plugin, called for key validation
+  maas: { x: 400, y: 305, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
+
+  // Agentic Loop container and plugins
+  al: { x: 170, y: 375, w: 540, h: 390, type: 'container', label: 'Agentic Loop (praxis)', color: '#d2a8ff' },
+  // Intake plugins
+  al_validator:    { x: 195, y: 408, w: 490, h: 26, label: 'request-validator', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_conv_mgr:     { x: 195, y: 436, w: 490, h: 26, label: 'conversation-manager', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_tool_reg:     { x: 195, y: 464, w: 490, h: 26, label: 'tool-registry', sublabel: '(MCP discovery)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  // Loop plugins
+  al_guardrails:   { x: 195, y: 500, w: 490, h: 26, label: 'guardrails', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  al_api_trans:    { x: 195, y: 528, w: 490, h: 26, label: 'api-translation', sublabel: '(req / resp)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_inference:    { x: 195, y: 556, w: 490, h: 26, label: 'inference-caller', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_tool_handler: { x: 195, y: 584, w: 490, h: 26, label: 'tool-call-handler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_loop_ctrl:    { x: 195, y: 612, w: 490, h: 26, label: 'loop-controller', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_srv_exec:     { x: 195, y: 640, w: 490, h: 26, label: 'server-tool-executor', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_mcp_exec:     { x: 195, y: 668, w: 490, h: 26, label: 'mcp-executor', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
+  // Completion plugins
+  al_assembler:    { x: 195, y: 706, w: 490, h: 26, label: 'response-assembler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_store:        { x: 195, y: 734, w: 490, h: 26, label: 'response-store', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+
+  // llm-d Scheduler / EPP — centered under all components
+  epp: { x: 460, y: 770, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 490, y: 792, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
+
+  pool: { x: 200, y: 870, w: 1000, h: 175, type: 'boundary', label: 'InferencePool' },
+  sidecar: { x: 380, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
+  decode:  { x: 250, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
+  nixl:    { x: 530, y: 950, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
+  prefill: { x: 860, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
 };
 
 const tips = {
-  responses:   { t: 'responses', d: 'Entry point for the Responses API. Receives POST /v1/responses requests from clients. Parses input, model selection, and tool definitions before passing downstream.', dt: [['Endpoint', 'POST /v1/responses'], ['Input', 'model, input, tools[], instructions'], ['Output', 'Parsed request context'], ['Format', 'OpenAI Responses API']] },
-  auth:        { t: 'Auth', d: 'Validates the incoming request credentials. Checks API key validity, permissions, and rate limits before allowing the request to proceed.', dt: [['Validates', 'API Key, Permissions'], ['Error', '401 Unauthorized / 403 Forbidden'], ['Phase', 'Request']] },
-  input_limit: { t: 'Input Limit', d: 'Enforces input token limits. Checks that the request does not exceed the maximum allowed input size for the selected model.', dt: [['Check', 'Input token count vs model limit'], ['Error', '400 Bad Request (input too long)'], ['Phase', 'Request']] },
-  conn_locker: { t: 'Conn Locker', d: 'Connection locking mechanism that ensures request isolation. Prevents concurrent modifications to the same conversation state.', dt: [['Function', 'Connection isolation'], ['Scope', 'Per-conversation lock'], ['Phase', 'Hydration']] },
-  mcp_list:    { t: 'MCP List Tools', d: 'Queries available MCP (Model Context Protocol) servers and lists their tools. Applies allow/deny filters to control which tools are available.', dt: [['Protocol', 'MCP (Model Context Protocol)'], ['Filters', 'allow_list / deny_list'], ['Output', 'Available tool definitions'], ['Phase', 'Hydration']] },
-  hydrate:     { t: 'Hydrate Prompt', d: 'Expands the prompt with system instructions, conversation history, and resolved tool definitions. Builds the full context for the model.', dt: [['Expands', 'System prompt, history, tools'], ['Resolves', 'Function tool schemas'], ['Output', 'Fully hydrated prompt'], ['Phase', 'Hydration']] },
-  gp_input:    { t: 'GP (Input)', d: 'Guardrails Processing on the input side. Runs content filtering and policy checks on the assembled prompt before it reaches the model.', dt: [['Function', 'Input content filtering'], ['Checks', 'Content policy, PII detection'], ['Phase', 'Pre-inference']] },
-  input_guard: { t: 'Input Guardrails', d: 'Final safety gate before inference. Can block requests that violate content policies, returning 403 Forbidden to the client.', dt: [['Function', 'Safety gate'], ['Action', 'Pass or Block (403)'], ['Checks', 'Content safety, policy compliance'], ['Phase', 'Pre-inference']] },
-  convert:     { t: 'Connect to Model Router', d: 'Translates the request into the format expected by the selected model backend. Routes to the appropriate inference provider.', dt: [['Function', 'Format translation + routing'], ['Supports', 'OpenAI, Anthropic, Azure, etc.'], ['Output', 'Provider-native request'], ['Phase', 'Processing']] },
-  inference:   { t: 'Inference', d: 'Calls the LLM for completion. May return a text response or a tool_use response that triggers the agentic loop.', dt: [['Function', 'LLM completion'], ['Output', 'Text response OR tool_use calls'], ['Loop', 'Re-entered during agentic loop'], ['Phase', 'Processing']] },
-  gp_output:   { t: 'GP (Output)', d: 'Guardrails Processing on the output side. Runs content filtering on the model response before it reaches the client.', dt: [['Function', 'Output content filtering'], ['Checks', 'Content policy, toxicity'], ['Phase', 'Post-inference']] },
-  guardrails:  { t: 'Guardrails (Output)', d: 'Output guardrails that evaluate the model response against safety policies. Can modify or redact content that violates policies.', dt: [['Function', 'Output safety evaluation'], ['Actions', 'Pass, Modify, Redact'], ['Phase', 'Post-inference']] },
-  output_limit:{ t: 'Output Limit (Hard)', d: 'Enforces hard output token limits. Truncates responses that exceed the maximum allowed output length.', dt: [['Function', 'Hard output truncation'], ['Trigger', 'Response exceeds max_output_tokens'], ['Phase', 'Post-inference']] },
-  tool_invoke: { t: 'Tool Invocation', d: 'Executes tool calls returned by the model. Supports MCP server tools, file operations, and web search. Results are passed to Assemble.', dt: [['Supports', 'MCP tools, File I/O, Web Search'], ['Protocol', 'MCP (Model Context Protocol)'], ['Input', 'tool_use calls from Inference'], ['Output', 'Tool execution results'], ['Phase', 'Agentic Loop']] },
-  assemble:    { t: 'Assemble', d: 'Combines tool execution results with the conversation context. Builds the updated prompt for the next inference pass in the agentic loop.', dt: [['Function', 'Context assembly'], ['Input', 'Tool results + conversation history'], ['Output', 'Updated prompt for re-inference'], ['Phase', 'Agentic Loop']] },
-  dehydrate:   { t: 'Dehydrate', d: 'Strips internal metadata and formatting from the response. Produces the clean client-facing response in Responses API format.', dt: [['Function', 'Response cleanup'], ['Removes', 'Internal metadata, debug info'], ['Output', 'Clean Responses API response'], ['Phase', 'Final']] },
+  gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs ext_proc filters for payload processing (IPP) and scheduling (EPP).', dt:[['Filters','IPP (ext_proc), EPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Routing','External model providers or on-cluster InferencePool'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['Kuadrant Operator','https://github.com/Kuadrant/kuadrant-operator']] },
+  p_rguard: { t:'guardrails (request)', d:'Unified guardrails plugin — evaluates safety and content policies on the incoming request. Dual-hook plugin shared with the Responses API agentic loop. NeMo Guardrails endpoint.', dt:[['Status','Coming Soon'],['Phase','Request'],['Boundary','External'],['Hooks','on_request (intake)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Type','ext_proc plugin']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails'],['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_ims: { t:'intelligent-model-selection [tbd]', d:'Automatically selects the optimal model or provider based on request characteristics, cost, latency, and availability. Scope and complexity are undefined.', dt:[['Status','TBD'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_mpr: { t:'model-provider-resolver', d:'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider, target model ID, and endpoint URL.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_bmth: { t:'base-model-to-header', d:'Resolves LoRA adapter names to their base model using Kubernetes ConfigMaps. Sets X-Gateway-Base-Model-Name header so EPP can select pods running the correct base model.', dt:[['Header Set','X-Gateway-Base-Model-Name'],['Data Source','Kubernetes ConfigMaps (adapter→base model mappings)'],['Use Case','LoRA adapter routing to correct InferencePool'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI → Anthropic Messages API'],['Path Rewrite','/v1/chat/completions → /v1/messages'],['Headers Added','anthropic-version: 2023-06-01'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['Secret Label','inference.networking.k8s.io/bbr-managed'],['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Azure','api-key: ...'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic → OpenAI format'],['Transforms','content→choices, stop_reason→finish_reason, usage normalization'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_resp_guard: { t:'guardrails (response)', d:'Unified guardrails plugin — evaluates content policies on the provider response after api-translation. Dual-hook plugin shared with the Responses API agentic loop. NeMo Guardrails endpoint.', dt:[['Status','Coming Soon'],['Phase','Response'],['Boundary','External'],['Hooks','on_response (per iteration)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Type','ext_proc plugin']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails'],['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  auth: { t:'Auth (Authorino)', logo:'redhat-logo.svg', d:'Authorino auth plugin running inside IPP. Validates the MaaS API key and resolves subscription info.', dt:[['Protocol','gRPC'],['Validation','Calls MaaS API /internal/v1/api-keys/validate'],['Headers Injected','X-MaaS-Username, X-MaaS-Subscription'],['Error','401 Unauthorized']], links:[['Authorino Repo','https://github.com/Kuadrant/authorino']] },
+  rlimit: { t:'Rate Limit (Limitador)', logo:'redhat-logo.svg', d:'Limitador rate-limit plugin running inside IPP. Implements token-based rate limiting via TokenRateLimitPolicy.', dt:[['Protocol','gRPC'],['Request Phase','Check if token quota allows'],['Response Phase','Read usage.total_tokens, report consumed'],['Policy','TokenRateLimitPolicy'],['Error','429 Too Many Requests']], links:[['Limitador Repo','https://github.com/Kuadrant/limitador']] },
+  maas: { t:'MaaS API', logo:'redhat-logo.svg', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Requires 3 CRDs to be created for each model offering.', dt:[['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRD: MaaSModelRef','Maps user-facing model name to provider endpoint and target model ID'],['CRD: MaaSAuth','Configures API key authentication via K8s Secret'],['CRD: MaaSSubscription','Defines quota — associates user/team with allowed models and rate limits']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service'],['MaaSModelRef CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-model-ref/'],['MaaSAuth CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-auth/'],['MaaSSubscription CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-subscription/']] },
+  epp: { t:'llm-d Scheduler / EPP', d:'An ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for on-cluster inference.', dt:[['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Supports','P/D disaggregated serving, prefix caching']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
+  sched: { t:'Endpoint Picker', d:'Selects the optimal pod for disaggregated serving. Routes to Prefill or Decode variants based on KV cache utilization and model affinity.', dt:[['Metrics','KV cache utilization, queue depth, model affinity'],['Output','Selected pod IP (Prefill + Decode)'],['Mode','P/D disaggregation or unified']], links:[['llm-d Scheduler','https://github.com/llm-d/llm-d-inference-scheduler']] },
+  sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction. Communicates with the prefill worker IP and orchestrates the KV cache transfer to the decode worker.', dt:[['Role','Transaction coordinator'],['Coordinates','Prefill worker IP ↔ Decode worker'],['Triggers','KVXfer metadata exchange']] },
+  prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the input prompt and generates the initial KV cache. Returns KVXfer metadata to enable the decode pod to pull KV cache via NIXL.', dt:[['Engine','vLLM'],['Function','Prompt processing, KV cache generation'],['Output','KVXfer metadata'],['Transfer','Via NIXL to Decode Pod']], links:[['vLLM','https://github.com/vllm-project/vllm'],['vLLM Docs','https://docs.vllm.ai/']] },
+  decode: { t:'Decode Pod A (vLLM)', d:'Generates output tokens auto-regressively using KV cache pulled from the prefill pod via NIXL high-speed interconnect.', dt:[['Engine','vLLM'],['Function','Auto-regressive token generation'],['Input','KV cache via NIXL pull'],['Response','Streamed back to Gateway']], links:[['vLLM','https://github.com/vllm-project/vllm'],['vLLM Docs','https://docs.vllm.ai/']] },
+  nixl: { t:'NIXL — KV Transfer', d:'NVIDIA Inference Xfer Library. High-speed KV cache transfer between prefill and decode pods over GPU-direct RDMA or Data Center Network.', dt:[['Full Name','NVIDIA Inference Xfer Library'],['Transport','GPU-direct RDMA, DCN'],['Direction','Decode pulls from Prefill'],['Metadata','KVXfer descriptors']], links:[['NIXL Repo','https://github.com/ai-dynamo/nixl']] },
+  anthropic: { t:'Anthropic', d:'Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format. Requires an ExternalModel CRD to configure.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Translation','OpenAI ↔ Anthropic Messages'],['CRD','ExternalModel (inference.opendatahub.io)'],['CRD Config','provider: anthropic, targetModel: claude-haiku-4-5-20251001, url: https://api.anthropic.com']], links:[['Anthropic Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/anthropic.md'],['ExternalModel CRD','https://github.com/opendatahub-io/models-as-a-service']] },
+  // External service tooltips
+  svc_guardrails: { t:'NeMo Guardrails', d:'NVIDIA NeMo Guardrails moderation endpoint. Called by the guardrails plugin for input/output safety evaluation.', dt:[['Called By','guardrails plugin (on_request + on_response)'],['Function','Content policy evaluation'],['Phase','Intake (input) + Loop (output per iteration)']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  svc_files: { t:'File Service (S3 / Vector Store)', d:'Vector store service for file_search tool execution. Called by server-tool-executor to search uploaded documents and return ranked chunks with citations.', dt:[['Called By','server-tool-executor (file_search dispatch)'],['Function','Semantic search over vector stores'],['Output','Ranked document chunks + citations'],['Backend','S3-compatible object store + vector index']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  svc_websearch: { t:'Web Search', d:'Web search API for the web_search tool. Called by server-tool-executor. No backend deployed yet — returns unsupported tool error until configured.', dt:[['Status','Coming Soon'],['Called By','server-tool-executor (web_search dispatch)'],['Backends','Tavily, Brave Search, SerpAPI (configurable)']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  svc_mcp: { t:'MCP Server', d:'External Model Context Protocol server. Called by tool-registry for tool discovery (list_mcp_tools) and by mcp-executor for tool invocation. Sessions are cached for request duration.', dt:[['Called By','tool-registry (discovery) + mcp-executor (invocation)'],['Protocol','MCP over SSE or stdio'],['Session','Cached via MCPSessionManager'],['Events','response.mcp_list_tools.*, response.mcp_call.*']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  svc_conv: { t:'Conversation Store', d:'Dual storage for conversation state. Stores structured conversation items (for UI/metadata) and raw chat messages (for inference context). Called by conversation-manager.', dt:[['Called By','conversation-manager (on_request load + on_response save)'],['Dual Storage','Conversation items + message store'],['Load','list_items() + get_conversation_messages()'],['Save','add_items() + store_conversation_messages()']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  svc_resp_store: { t:'Response Store', d:'SQL persistence for response objects. Called by response-store to persist responses and by hydrate-prompt to load previous responses for multi-turn continuation.', dt:[['Called By','response-store (write) + hydrate-prompt (read)'],['Write','upsert_response_object()'],['Read','get_response_object(response_id)'],['Retrieval','GET /v1/responses/{id}']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  // Agentic Loop tooltips
+  al_validator: { t:'request-validator', d:'Format-aware validation: validates Chat Completions messages/params OR Responses API input/tools/conversation. Writes request_format and validated parameters to CycleState.', dt:[['Phase','Intake'],['Boundary','Local'],['IPP Status','Extends'],['Validates','model, input, tools, tool_choice, max_tool_calls, stream, background'],['Output','CycleState: request_format, validated_params, has_tools, is_streaming'],['Plugin Action','Continue or Reject']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses'],['Agentic Loop Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  al_conv_mgr: { t:'conversation-manager', d:'Loads and saves conversation state. Dual-hook plugin: on_request loads conversation items + stored messages, on_response persists input + output items and messages for the next turn.', dt:[['Phase','Intake + Completion'],['Boundary','External'],['on_request','Load conversation items + stored messages'],['on_response','Save input + output items, persist messages'],['Mutual Exclusivity','Cannot be used with previous_response_id'],['Dual Storage','Conversation items (UI) + message store (inference)']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_tool_reg: { t:'tool-registry (MCP discovery)', d:'Resolves and registers available tools for the request. Connects to MCP servers to discover tools, applies allowed_tools filtering, and stores the resolved tool map in CycleState.', dt:[['Phase','Intake'],['Boundary','External'],['Tool Types','function, mcp, web_search, file_search, code_interpreter, custom'],['MCP Discovery','Connects to MCP servers, lists tools, caches definitions'],['Events','response.mcp_list_tools.in_progress/completed']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses'],['MCP Protocol','https://modelcontextprotocol.io']] },
+  al_guardrails: { t:'guardrails', d:'Unified guardrails plugin — evaluates safety and content policies on both request (intake) and response (each loop iteration). Same plugin used in both IPP and agentic loop. NeMo Guardrails endpoint.', dt:[['Phase','Intake + Loop'],['Boundary','External'],['Hooks','on_request (intake), on_response (per iteration)'],['On Violation','Reject (intake) or retry with feedback (mid-loop)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Config','Enabled/disabled per request or globally']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  al_api_trans: { t:'api-translation (req / resp)', d:'Translates between Responses API format and provider-native formats. Dual-hook plugin: on_request converts input items to provider format, on_response converts provider response back to Responses API output items.', dt:[['Phase','Loop (before + after inference)'],['Boundary','Local'],['Request Hook','Responses API items → provider-native (e.g., /v1/messages)'],['Response Hook','Provider response → Responses API output items + streaming events'],['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex AI']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  al_inference: { t:'inference-caller', d:'Calls the model provider for inference. The call goes back through the existing IPP pipeline (auth, rate-limit, api-translation, apikey-injection) to the external model.', dt:[['Phase','Loop'],['Boundary','External'],['Nested Call','POST /v1/chat/completions via IPP pipeline'],['Truncation','Inline — trims context if truncation=auto'],['Isolation','Inner IPP pipeline has its own CycleState']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor']] },
+  al_tool_handler: { t:'tool-call-handler', d:'Detects, classifies, and routes tool calls from model output. Writes routing decisions to CycleState for the executor to dispatch.', dt:[['Phase','Loop'],['Boundary','Local'],['Routing','server-side tools → executor fan-out, function tools → yield to client'],['CycleState','tool_routing[], has_server_side_tools, has_function_tools'],['Events','response.output_item.done, response.function_call_arguments.*']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_loop_ctrl: { t:'loop-controller', d:'Evaluates loop state and signals whether to continue iterating or stop. Writes loop_action to CycleState — the executor reads it and acts.', dt:[['Phase','Loop'],['Boundary','Local'],['Signals','continue, stop_completed, stop_incomplete, stop_yield, stop_failed'],['Limits','max_tool_calls, max_output_tokens, max_infer_iters'],['Usage','Accumulates total_input_tokens, total_output_tokens across iterations']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_srv_exec: { t:'server-tool-executor', d:'Executes internally-hosted tools via a configuration-driven backend dispatch table. Routes to file_search, web_search, code_interpreter, and other tool backends.', dt:[['Phase','Loop (tool execution)'],['Boundary','External'],['Tools','file_search, web_search, code_interpreter, image_gen, computer, custom'],['Dispatch','Config-driven backend URL per tool type'],['Parallel','Supports parallel_tool_calls=true']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_mcp_exec: { t:'mcp-executor', d:'Orchestrates calls to external MCP servers. Reuses the MCP session from tool-registry discovery. Supports the MCP approval flow for tool authorization.', dt:[['Phase','Loop (tool execution)'],['Boundary','External'],['Session','Reuses session from tool-registry discovery'],['Approval','mcp_approval_request → client review → mcp_approval_response'],['Events','response.mcp_call.in_progress/completed/failed']], links:[['MCP Protocol','https://modelcontextprotocol.io'],['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_assembler: { t:'response-assembler', d:'Builds the final ResponseResource object with all spec-required fields: output items, accumulated usage, context edits, and echo-back fields.', dt:[['Phase','Completion'],['Boundary','Local'],['Output','ResponseResource with object="response"'],['Fields','id, status, output, usage, context_edits, echo-back params'],['Events','response.output_item.done, response.completed']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  al_store: { t:'response-store', d:'Persists the response when store=true. The stored response is retrievable via GET /v1/responses/{id} and can be referenced by future requests via previous_response_id.', dt:[['Phase','Completion'],['Boundary','External'],['Condition','Runs when store=true'],['Retrieval','GET /v1/responses/{id}'],['Continuation','Referenced via previous_response_id in next request']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
 };
 
 let overlayWasRunning = false, highlightKey = null;
@@ -276,34 +340,39 @@ function showOverlay(key) {
   document.getElementById('overlay-title').textContent = tip.t;
   document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
   document.getElementById('overlay-desc').textContent = tip.d;
+  if (tip.logo) { const titleEl = document.getElementById('overlay-title'); titleEl.innerHTML = esc(tip.t); titleEl.insertAdjacentHTML('beforebegin', `<img src="${tip.logo}" style="height:24px;margin-bottom:8px">`); }
   let dh = '';
-  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">' + esc(l) + '</span><span style="color:#c9d1d9">' + esc(v) + '</span></div>'; });
-  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += '<a href="' + u + '" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor=\'#58a6ff\'" onmouseout="this.style.borderColor=\'#30363d\'">' + esc(l) + ' &#8599;</a>'; }); dh += '</div>'; }
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
+  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
   document.getElementById('overlay-details').innerHTML = dh;
+  // Position card to not overlap the highlighted component
   const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
   const canvasRight = innerWidth - 380;
+  // Place card to the right of the component if space, otherwise left
   let cx, cy;
   if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
   cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
   card.style.left = cx + 'px';
   card.style.top = cy + 'px';
   ov.style.display = 'block';
+  // Show highlight box above overlay at the component's screen position
   const hb = document.getElementById('highlight-box');
   hb.style.left = nx + 'px';
   hb.style.top = ny + 'px';
   hb.style.width = nw + 'px';
   hb.style.height = nh + 'px';
-  hb.style.border = '3px solid ' + (n.color || '#58a6ff');
-  hb.style.boxShadow = '0 0 30px ' + (n.color || '#58a6ff') + '88, inset 0 0 20px ' + (n.color || '#58a6ff') + '22';
+  hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
+  hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
   hb.style.background = isDark ? '#161b22' : '#f6f8fa';
   hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
   hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
-  hb.innerHTML = '<div style="font-weight:700;font-size:' + (nw > 150 ? 16 : 13) + 'px">' + esc(n.label) + '</div>' + (n.sublabel ? '<div style="font-size:' + (nw > 150 ? 12 : 10) + 'px;color:#8b949e">' + esc(n.sublabel) + '</div>' : '');
+  hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
   hb.style.transform = 'none';
   draw();
 }
 function closeOverlay() {
   document.getElementById('overlay').style.display = 'none';
+  const logoImg = document.querySelector('#overlay-card > img'); if (logoImg) logoImg.remove();
   const hb = document.getElementById('highlight-box');
   hb.style.display = 'none';
   highlightKey = null;
@@ -324,9 +393,9 @@ function resize() {
   const panelW = 380;
   W = canvas.width = innerWidth - panelW;
   H = canvas.height = innerHeight;
-  sc = Math.min(W / LW, H / LH) * 0.92;
+  sc = Math.min(W / LW, H / LH) * 0.98;
   ox = (W - LW * sc) / 2;
-  oy = (H - LH * sc) * 0.12;
+  oy = (H - LH * sc) * 0.04;
   draw();
 }
 addEventListener('resize', resize);
@@ -337,23 +406,18 @@ function ts(s) { return s * sc; }
 
 function drawBox(key) {
   const n = N[key], c = C();
-  if (!n || n.type === 'hidden') return;
+  if (!n || n.type === 'boundary' || n.type === 'container') return;
   const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
   const isA = activeNodes.has(key), hasBadge = badges[key] != null;
   ctx.save();
 
   if (n.type === 'icon') {
-    ctx.font = ts(32) + 'px serif';
+    ctx.font = `${ts(32)}px serif`;
     ctx.textAlign = 'center';
     ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
-    ctx.font = 'bold ' + ts(16) + 'px system-ui';
+    ctx.font = `bold ${ts(16)}px system-ui`;
     ctx.fillStyle = c.txt;
     ctx.fillText(n.label, x + w / 2, y + ts(46));
-    if (n.sublabel) {
-      ctx.font = ts(11) + 'px system-ui';
-      ctx.fillStyle = c.dim;
-      ctx.fillText(n.sublabel, x + w / 2, y + ts(58));
-    }
     ctx.restore();
     return;
   }
@@ -377,21 +441,36 @@ function drawBox(key) {
   ctx.fill();
   ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
   ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
+  if (n.type === 'plugin') { ctx.setLineDash([ts(5), ts(4)]); }
   ctx.stroke();
+  ctx.setLineDash([]);
 
   const fs = n.fs || 16;
   ctx.fillStyle = c.txt;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  if (n.sublabel) {
-    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
+  if (n.soon && !n.sublabel) {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(6));
+    ctx.font = `bold ${ts(9)}px system-ui`;
+    ctx.fillStyle = '#f0883e';
+    ctx.fillText('COMING SOON', x + w / 2, y + h / 2 + ts(8));
+  } else if (n.sublabel) {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
-    ctx.font = ts(Math.max(fs - 3, 10)) + 'px system-ui';
+    ctx.font = `${ts(Math.max(fs - 3, 11))}px system-ui`;
     ctx.fillStyle = c.dim;
-    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+    if (n.soon) {
+      ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(6));
+      ctx.font = `bold ${ts(8)}px system-ui`;
+      ctx.fillStyle = '#f0883e';
+      ctx.fillText('COMING SOON', x + w / 2, y + h / 2 + ts(16));
+    } else {
+      ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+    }
   } else {
-    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
+    ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2);
   }
 
@@ -406,7 +485,7 @@ function drawBox(key) {
       ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
       ctx.fillStyle = n.color;
       ctx.fill();
-      ctx.font = 'bold ' + ts(10) + 'px system-ui';
+      ctx.font = `bold ${ts(10)}px system-ui`;
       ctx.fillStyle = isDark ? '#0d1117' : '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -416,74 +495,193 @@ function drawBox(key) {
   ctx.restore();
 }
 
+function drawContainer(key, isGlow) {
+  const n = N[key], c = C();
+  if (!n || n.type !== 'container') return;
+  ctx.save();
+  if (isGlow) { ctx.shadowColor = n.color; ctx.shadowBlur = ts(22); }
+  ctx.beginPath();
+  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
+  const a = isGlow ? 'cc' : '55';
+  ctx.strokeStyle = n.color + a;
+  ctx.lineWidth = ts(isGlow ? 3 : 2.5);
+  ctx.setLineDash([ts(7), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(12)}px system-ui`;
+  ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
+  ctx.textAlign = 'left';
+  ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
+  ctx.restore();
+}
+
 function drawBounds() {
   const c = C();
-
-  // Agentic Loop boundary (dashed red/coral rectangle)
-  var loopBadge = badges['loop_area'];
-  var loopStart = fading['loop_area'] || 0;
-  var loopAge = loopStart ? Date.now() - loopStart : 99999;
-  var loopGlow = loopBadge != null && loopAge < 800;
-  var loopFlashOn = loopGlow && loopAge < 500;
-  ctx.save();
-  if (loopFlashOn) {
-    ctx.shadowColor = '#f85149';
-    ctx.shadowBlur = ts(30);
-  }
+  // Cluster boundary
+  const cb = N.cluster;
   ctx.beginPath();
-  ctx.strokeStyle = loopFlashOn ? '#f85149' : (loopGlow ? '#f85149aa' : '#f8514966');
-  ctx.lineWidth = loopFlashOn ? ts(4) : ts(2);
-  ctx.setLineDash([ts(8), ts(5)]);
-  ctx.roundRect(tx(70), ty(330), ts(930), ts(210), ts(12));
+  ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2.5);
+  ctx.setLineDash([ts(10), ts(8)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = loopFlashOn ? '#f8514933' : (loopGlow ? '#f8514920' : (isDark ? '#f8514912' : '#f8514908'));
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#f85149';
-  ctx.font = 'bold ' + ts(11) + 'px system-ui';
-  ctx.textAlign = 'left';
-  ctx.fillText('Agentic Loop', tx(80), ty(345));
-  // Draw loop badge number on the boundary
-  if (loopFlashOn) {
-    var lb = Array.isArray(loopBadge) ? loopBadge[loopBadge.length-1] : loopBadge;
-    ctx.fillStyle = '#f85149';
-    ctx.strokeStyle = '#f85149';
+  ctx.font = `${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+
+  // AI Gateway boundary
+  drawContainer('aigw', false);
+  // IPP container
+  drawContainer('ipp', glowing.has('ipp'));
+  // Agentic Loop container
+  drawContainer('al', glowing.has('al'));
+  // EPP container (llm-d Scheduler)
+  drawContainer('epp', glowing.has('epp'));
+
+  // IPP request/response plugin sections
+  if (N.ipp) {
+    ctx.save();
+    // Request plugins section
     ctx.beginPath();
-    ctx.arc(tx(80), ty(335), ts(14), 0, Math.PI*2);
-    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.roundRect(tx(758), ty(300), ts(345), ts(385), ts(8));
+    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Request Plugins →', tx(770), ty(312));
+
+    // Response plugins section
+    ctx.beginPath();
+    ctx.roundRect(tx(758), ty(695), ts(345), ts(110), ts(8));
+    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
+    ctx.textAlign = 'left';
+    ctx.fillText('← Response Plugins', tx(770), ty(710));
+    ctx.restore();
+  }
+
+  // Agentic Loop plugin sections
+  if (N.al) {
+    ctx.save();
+    // Intake plugins section (3 nodes: validator, conv_mgr, tool_reg)
+    ctx.beginPath();
+    ctx.roundRect(tx(183), ty(395), ts(515), ts(100), ts(8));
+    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Request Plugins →', tx(195), ty(405));
+
+    // Loop plugins section (7 nodes: guardrails → mcp_exec)
+    ctx.beginPath();
+    ctx.roundRect(tx(183), ty(495), ts(515), ts(205), ts(8));
+    ctx.fillStyle = isDark ? '#d2a8ff06' : '#d2a8ff05';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#d2a8ff25' : '#d2a8ff20';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#d2a8ff88' : '#d2a8ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('⟳ Loop Plugins', tx(195), ty(497));
+
+    // Completion plugins section (2 nodes: assembler, store)
+    ctx.beginPath();
+    ctx.roundRect(tx(183), ty(700), ts(515), ts(64), ts(8));
+    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
+    ctx.textAlign = 'left';
+    ctx.fillText('← Response Plugins', tx(195), ty(702));
+    ctx.restore();
+  }
+
+  // InferencePool boundary
+  const ip = N.pool;
+  ctx.beginPath();
+  ctx.roundRect(tx(ip.x), ty(ip.y), ts(ip.w), ts(ip.h), ts(10));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(6), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(13)}px system-ui`;
+  ctx.fillStyle = c.dim;
+  ctx.textAlign = 'left';
+  ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
+
+  // Decode Pod A sub-boundary (left, under sidecar)
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(tx(235), ty(933), ts(230), ts(82), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Stacked vLLM pods behind decode (decorative)
+  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
+  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(250 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#f85149';
-    ctx.font = 'bold '+ts(12)+'px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(lb, tx(80), ty(335));
-    ctx.textBaseline = 'alphabetic';
   }
-  ctx.restore();
 
-  // Permanent arrow: Conn Locker -> MCP List Tools (always visible)
-  ctx.save();
-  ctx.strokeStyle = isDark ? '#8b949e66' : '#8b949e44';
-  ctx.lineWidth = ts(2);
-  ctx.setLineDash([ts(4), ts(3)]);
-  var cl = N.conn_locker, ml = N.mcp_list;
+  // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
-  ctx.moveTo(tx(cl.x + cl.w), ty(cl.y + cl.h/2));
-  ctx.lineTo(tx(ml.x), ty(ml.y + ml.h/2));
+  ctx.roundRect(tx(845), ty(933), ts(230), ts(82), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  // arrowhead
-  var aAng = Math.atan2(0, 1);
-  ctx.fillStyle = isDark ? '#8b949e66' : '#8b949e44';
-  ctx.beginPath();
-  ctx.moveTo(tx(ml.x), ty(ml.y + ml.h/2));
-  ctx.lineTo(tx(ml.x - 8), ty(ml.y + ml.h/2 - 5));
-  ctx.lineTo(tx(ml.x - 8), ty(ml.y + ml.h/2 + 5));
-  ctx.fill();
-  ctx.restore();
 
+  // Stacked vLLM pods behind prefill (decorative)
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(860 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function edgePt(n, targetX, targetY, yOff) {
@@ -525,7 +723,7 @@ function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
     ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.font = 'bold ' + ts(10) + 'px system-ui';
+    ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#0d1117' : '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -566,7 +764,7 @@ function drawLines() {
         ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
         ctx.fillStyle = l.color;
         ctx.fill();
-        ctx.font = 'bold ' + ts(10) + 'px system-ui';
+        ctx.font = `bold ${ts(10)}px system-ui`;
         ctx.fillStyle = isDark ? '#0d1117' : '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -576,6 +774,7 @@ function drawLines() {
     } else {
       let fp = resolveEdge(fn, l, true);
       let tp = resolveEdge(tn, l, false);
+      // Fall back to auto edge if no specific direction
       if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
         const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
         fp = edgePt(fn, tc, tcy, l.yOff || 0);
@@ -608,7 +807,7 @@ function resolveEdge(n, l, isFrom) {
   }
 }
 
-// Click handler
+// Click handler — show component info in bottom panel
 canvas.addEventListener('click', e => {
   const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
   for (const k of Object.keys(tips)) {
@@ -642,9 +841,11 @@ class Dot {
     const fn = N[fKey], tn = N[tKey];
     const yo = (opts && opts.yOff) || 0;
     let fp, tp;
+
     const lo = opts || {};
     fp = resolveEdge(fn, lo, true);
     tp = resolveEdge(tn, lo, false);
+    // If no specific edge direction was set, fall back to auto edge calculation
     if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
       const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
       fp = edgePt(fn, tc, tcy, yo);
@@ -658,6 +859,7 @@ class Dot {
     } else {
       this.pts = [fp, tp];
     }
+
     this.segLens = [];
     this.totalLen = 0;
     for (let i = 1; i < this.pts.length; i++) {
@@ -669,6 +871,7 @@ class Dot {
     this.segIdx = 0;
     this.x = this.pts[0].x;
     this.y = this.pts[0].y;
+    // Normalize speed so all arrows move at same pixel velocity (~4px/frame)
     const pxPerFrame = 4;
     this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
   }
@@ -708,7 +911,7 @@ class Dot {
   }
   draw() {
     ctx.save();
-    // Progressive trail
+    // Progressive trail — only behind the packet
     ctx.beginPath();
     ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
     for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
@@ -717,7 +920,7 @@ class Dot {
     ctx.lineWidth = ts(2);
     ctx.globalAlpha = 0.3;
     ctx.stroke();
-    // Trailing data stream
+    // Trailing data stream — small dots behind the leading packet
     for (let j = 4; j >= 1; j--) {
       const bt = this.t - j * 0.06;
       if (bt <= 0) continue;
@@ -728,7 +931,7 @@ class Dot {
       ctx.fillStyle = this.color;
       ctx.fill();
     }
-    // Leading packet
+    // Leading packet — pentagon shape oriented along travel direction
     ctx.globalAlpha = 1;
     const si = Math.min(this.segIdx, this.pts.length - 2);
     const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
@@ -762,6 +965,7 @@ function draw() {
   Object.keys(N).forEach(k => drawBox(k));
   dots.forEach(d => { d.update(); d.draw(); });
   dots = dots.filter(d => d.alive);
+  // Highlight clicked component when overlay is showing
   if (highlightKey && N[highlightKey]) {
     const n = N[highlightKey];
     const pad = 8;
@@ -788,13 +992,15 @@ function initSteps() {
   ctr.innerHTML = '';
   flow.forEach((s, i) => {
     const d = document.createElement('div');
-    d.className = 'step pending';
+    d.className = s.skip ? 'step skipped' : 'step pending';
     d.id = 'step-' + i;
-    d.innerHTML = '<span class="step-mk"></span><span>' + esc(s.t) + '</span>';
-    d.onclick = () => jumpToStep(i);
+    d.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
+    if (!s.skip) d.onclick = () => jumpToStep(i);
     ctr.appendChild(d);
   });
 }
+
+// jumpToStep defined below with full snapshot restore
 
 // ================================================================
 // INSPECTOR
@@ -808,35 +1014,59 @@ function setInspPhase(phase) {
 
 function initInspector() {
   setInspPhase('request');
-  if (activeFlow === 'simple') {
+  if (activeFlow.startsWith('resp_')) {
     inspHeaders = [
       { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
+      { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep', id: 'h-auth' },
       { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
     ];
-    inspBody = [
-      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
-      { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
-      { v: '"tools": [{"type":"function","name":"get_weather"}]', s: 'keep', id: 'b-tools' },
-    ];
-  } else if (activeFlow === 'blocked') {
-    inspHeaders = [
-      { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
-      { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
-    ];
-    inspBody = [
-      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
-      { v: '"input": "How to hack into a bank system"', s: 'keep', id: 'b-input' },
-      { v: '"tools": []', s: 'keep', id: 'b-tools' },
-    ];
+    if (activeFlow === 'resp_simple') {
+      inspBody = [
+        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"input": "Explain how transformers work"', s: 'keep', id: 'b-input' },
+      ];
+    } else if (activeFlow === 'resp_rag') {
+      inspBody = [
+        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What do docs say about Q4?"', s: 'keep', id: 'b-input' },
+        { v: '"tools": [{"type":"file_search","vector_store_ids":[...]}]', s: 'keep', id: 'b-tools' },
+        { v: '"conversation": "my-session-001"', s: 'keep', id: 'b-conv' },
+      ];
+    } else if (activeFlow === 'resp_mcp') {
+      inspBody = [
+        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"input": [{"role":"user","content":"Find weather"}]', s: 'keep', id: 'b-input' },
+        { v: '"tools": [{"type":"mcp","server_label":"weather"}]', s: 'keep', id: 'b-tools' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+      ];
+    } else if (activeFlow === 'resp_bg') {
+      inspBody = [
+        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"input": "Analyze Q4 and list issues"', s: 'keep', id: 'b-input' },
+        { v: '"tools": [{"type":"file_search"},{"type":"mcp",...}]', s: 'keep', id: 'b-tools' },
+        { v: '"background": true', s: 'keep', id: 'b-bg' },
+      ];
+    } else if (activeFlow === 'resp_full') {
+      inspBody = [
+        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What do docs say about Q4?"', s: 'keep', id: 'b-input' },
+        { v: '"tools": [file_search, mcp, function]', s: 'keep', id: 'b-tools' },
+        { v: '"conversation": "my-session-001"', s: 'keep', id: 'b-conv' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+        { v: '"guardrail_ids": ["content-safety"]', s: 'keep', id: 'b-guard' },
+      ];
+    }
   } else {
     inspHeaders = [
-      { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
+      { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep', id: 'h-path' },
+      { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep', id: 'h-auth' },
       { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
     ];
     inspBody = [
-      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
-      { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
-      { v: '"tools": [{"type":"function","name":"get_weather"}]', s: 'keep', id: 'b-tools' },
+      { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+      { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep', id: 'b-msgs' },
+      { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+      { v: '"stream": false', s: 'keep', id: 'b-stream' },
     ];
   }
   inspCycle = [];
@@ -846,427 +1076,1360 @@ function initInspector() {
 
 function renderInsp() {
   const el = document.getElementById('insp-content');
-  let h = '<div class="insp-plugin">' + esc(inspStepLabel) + '</div>';
+  let h = `<div class="insp-plugin">${esc(inspStepLabel)}</div>`;
   h += '<div class="insp-sec">Headers:</div>';
-  inspHeaders.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+  inspHeaders.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   h += '<div class="insp-sec">Body:</div>';
-  inspBody.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   if (inspCycle.length) {
     h += '<div class="insp-sec">CycleState:</div>';
-    inspCycle.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+    inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   }
   el.innerHTML = h;
 }
 
 function resetStyles() {
-  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err' && l.s !== 'guard' && l.s !== 'blocked') l.s = 'keep'; });
-  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err' && l.s !== 'guard' && l.s !== 'blocked') l.s = 'keep'; });
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
   inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
 }
 
-function inspStepSimple(stepNum) {
+function inspStepAuth(stepNum) {
   switch (stepNum) {
-    case 1: inspStepLabel = 'Client -> responses'; break;
-    case 2: inspStepLabel = 'responses -> Auth'; break;
-    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
-    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
-    case 5: inspStepLabel = 'Input Limit -> MCP List Tools'; break;
-    case 6: inspStepLabel = 'MCP returns approved tools'; break;
-    case 7: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
-    case 8:
-      inspStepLabel = 'Hydrate Prompt: expand prompt + function tools';
-      inspBody.find(l => l.id === 'b-tools').s = 'del';
-      inspBody.push({ v: '"resolved_tools": [{"name":"get_weather"}]', s: 'add', id: 'b-rtool' });
-      inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
-      break;
-    case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
-    case 10: inspStepLabel = 'Guardrails Prep: prepare input checks'; break;
-    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
-    case 12:
-      inspStepLabel = 'Input Guardrails: PASS';
-      var bi12s = inspBody.find(l => l.id === 'b-input');
-      if (bi12s) bi12s.s = 'guard';
-      break;
-    case 13:
-      inspStepLabel = 'Input Guardrails -> Connect to Model Router';
-      var bi13s = inspBody.find(l => l.id === 'b-input');
-      if (bi13s) bi13s.s = 'keep';
-      break;
-    case 14:
-      inspStepLabel = 'Connect to Model Router';
-      inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
-      break;
-    case 15: inspStepLabel = 'Connect -> Inference'; break;
-    case 16:
-      inspStepLabel = 'Inference: first pass';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
+    case 5:
+      inspStepLabel = '⑤ MaaS API responds: key INVALID';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
       inspBody = [
-        { v: '"output": [{"type":"message","content":[{"type":"text","text":"The weather..."}]}]', s: 'add', id: 'r-output' },
-        { v: '"status": "completed"', s: 'add', id: 'r-status2' },
+        { v: '"valid": false', s: 'add', id: 'b-valid' },
+        { v: '"error": "invalid_api_key"', s: 'add', id: 'b-err' },
       ];
-      inspCycle = [];
       break;
-    case 17: inspStepLabel = 'Inference -> Guardrails Prep'; break;
-    case 18: inspStepLabel = 'Guardrails Prep: output content filter'; break;
-    case 19: inspStepLabel = 'Guardrails Prep -> Guardrails'; break;
-    case 20:
-      inspStepLabel = 'Guardrails: output check PASS';
-      var ro20 = inspBody.find(l => l.id === 'r-output');
-      if (ro20) ro20.s = 'guard';
-      break;
-    case 21:
-      inspStepLabel = 'Guardrails -> Output Limit';
-      var ro21 = inspBody.find(l => l.id === 'r-output');
-      if (ro21) ro21.s = 'keep';
-      break;
-    case 22: inspStepLabel = 'Output Limit check'; break;
-    case 23: inspStepLabel = 'Output Limit -> Dehydrate'; break;
-    case 24:
-      inspStepLabel = 'Tool Invocation: call MCP server';
-      break;
-    case 25: inspStepLabel = 'Tool -> Assemble'; break;
-    case 26: inspStepLabel = 'Assemble tool results'; break;
-    case 27: inspStepLabel = 'LOOP: back to Connect to Model Router'; break;
-    case 28: inspStepLabel = 'Agentic loop: re-inference pass 1'; break;
-    case 29: inspStepLabel = 'Agentic loop: re-inference pass 2'; break;
-    case 30: inspStepLabel = 'Assemble -> Dehydrate'; break;
-    case 31:
-      inspStepLabel = 'Dehydrate: clean response';
-      var rod = inspBody.find(l => l.id === 'r-output');
-      if (rod) rod.s = 'highlight';
-      break;
-    case 32:
-      inspStepLabel = 'Dehydrate -> Client (response)';
-      var rsd = inspBody.find(l => l.id === 'r-status2');
-      if (rsd) rsd.s = 'highlight';
-      break;
-  }
-}
-
-function inspStepAgentic(stepNum) {
-  switch (stepNum) {
-    case 1: inspStepLabel = 'Client -> responses'; break;
-    case 2: inspStepLabel = 'responses -> Auth'; break;
-    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
-    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
-    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
     case 6:
-      inspStepLabel = 'Hydrate Prompt: expand tools';
-      inspBody.find(l => l.id === 'b-tools').s = 'highlight';
-      inspCycle = [
-        { v: 'system_prompt: expanded', s: 'add', id: 'c-sys' },
-        { v: 'tools: [get_weather]', s: 'add', id: 'c-tools' },
-      ];
+      inspStepLabel = '⑥ Auth REJECTS request';
       break;
-    case 7: inspStepLabel = 'GP input: content filter'; break;
-    case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
-    case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
-    case 10:
-      inspStepLabel = 'Connect to Model Router';
-      inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
-      break;
-    case 11: inspStepLabel = 'Convert -> Inference'; break;
-    case 12:
-      inspStepLabel = 'Inference: first pass';
-      inspBody = [
-        { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
-        { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
-      ];
-      break;
-    case 13:
-      inspStepLabel = 'Inference returns tool_use';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-      ];
-      inspBody = [
-        { v: '"output": [{"type":"function_call","name":"get_weather","arguments":"{\\"city\\":\\"NYC\\"}"}]', s: 'add', id: 'r-tool-call' },
-        { v: '"status": "incomplete"', s: 'add', id: 'r-status2' },
-      ];
-      inspCycle = [{ v: 'tool_use: get_weather(city=NYC)', s: 'add', id: 'c-tu' }];
-      break;
-    case 14: inspStepLabel = 'Inference -> Tool Invocation'; break;
-    case 15:
-      inspStepLabel = 'Tool Invocation: call MCP server';
-      inspCycle.push({ v: 'mcp_call: get_weather({city:NYC})', s: 'add', id: 'c-mcp' });
-      break;
-    case 16:
-      inspStepLabel = 'Tool Invocation -> Assemble';
-      inspCycle.push({ v: 'tool_result: "72F, partly cloudy"', s: 'add', id: 'c-res' });
-      break;
-    case 17:
-      inspStepLabel = 'Assemble: combine results';
-      inspBody = [
-        { v: '"output": [{"type":"function_call_output","call_id":"...","output":"72F, partly cloudy"}]', s: 'add', id: 'r-assembled' },
-      ];
-      const cr = inspCycle.find(l => l.id === 'c-res');
-      if (cr) cr.s = 'highlight';
-      break;
-    case 18:
-      inspStepLabel = 'Assemble -> Inference (loop back)';
-      setInspPhase('request');
-      inspHeaders = [
-        { v: 'POST /v1/responses (loop iteration 2)', s: 'highlight', id: 'h-path' },
-      ];
-      inspBody = [
-        { v: '"input": [...conversation + tool_result]', s: 'add', id: 'b-loop' },
-      ];
-      break;
-    case 19:
-      inspStepLabel = 'Inference: second pass with tool results';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
-      inspBody = [
-        { v: '"output": [{"type":"message","content":[{"type":"text","text":"The weather in NYC is 72F, partly cloudy."}]}]', s: 'add', id: 'r-output' },
-        { v: '"status": "completed"', s: 'add', id: 'r-status2' },
-      ];
-      inspCycle = [];
-      break;
-    case 20: inspStepLabel = 'Inference -> GP output'; break;
-    case 21: inspStepLabel = 'GP output: content filter'; break;
-    case 22: inspStepLabel = 'GP -> Guardrails'; break;
-    case 23: inspStepLabel = 'Guardrails output check'; break;
-    case 24: inspStepLabel = 'Guardrails -> Output Limit'; break;
-    case 25: inspStepLabel = 'Output Limit check'; break;
-    case 26: inspStepLabel = 'Output Limit -> Dehydrate'; break;
-    case 27:
-      inspStepLabel = 'Dehydrate: clean response';
-      const ro2 = inspBody.find(l => l.id === 'r-output');
-      if (ro2) ro2.s = 'highlight';
-      break;
-    case 28:
-      inspStepLabel = 'Dehydrate -> Client (response)';
-      const rs2 = inspBody.find(l => l.id === 'r-status2');
-      if (rs2) rs2.s = 'highlight';
-      break;
-  }
-}
-
-function inspStepBlocked(stepNum) {
-  switch (stepNum) {
-    case 1: inspStepLabel = 'Client -> responses'; break;
-    case 2: inspStepLabel = 'responses -> Auth'; break;
-    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
-    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
-    case 5: inspStepLabel = 'Input Limit -> MCP List Tools'; break;
-    case 6: inspStepLabel = 'MCP returns approved tools'; break;
-    case 7: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
-    case 8:
-      inspStepLabel = 'Hydrate Prompt: expand prompt';
-      inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
-      break;
-    case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
-    case 10: inspStepLabel = 'Guardrails Prep: scan input content'; break;
-    case 11:
-      inspStepLabel = 'Guardrails Prep -> Input Guardrails';
-      var bi11b = inspBody.find(l => l.id === 'b-input');
-      if (bi11b) bi11b.s = 'guard';
-      break;
-    case 12:
-      inspStepLabel = 'Input Guardrails: BLOCKED — harmful content';
-      var bi12 = inspBody.find(l => l.id === 'b-input');
-      if (bi12) bi12.s = 'blocked';
+    case 7:
+      inspStepLabel = '⑦ IPP → Gateway (auth failed)';
       setInspPhase('error');
       inspHeaders = [
-        { v: 'HTTP/1.1 403 Forbidden', s: 'err', id: 'r-status' },
+        { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
       ];
       inspBody = [
-        { v: '"error": "content_policy_violation"', s: 'err', id: 'r-err' },
-        { v: '"message": "Request blocked: harmful content detected"', s: 'err', id: 'r-msg' },
-        { v: '"blocked_input": "How to hack into a bank system"', s: 'blocked', id: 'r-blocked' },
+        { v: '"error": "invalid_api_key"', s: 'err', id: 'r-err' },
+        { v: '"message": "API key is not valid"', s: 'err', id: 'r-msg' },
       ];
       inspCycle = [];
       break;
-    case 13:
-      inspStepLabel = 'Input Guardrails -> Client: 403 Forbidden';
-      var st13 = inspHeaders.find(l => l.id === 'r-status');
-      if (st13) st13.s = 'highlight';
+    case 8: {
+      inspStepLabel = '⑧ 401 Unauthorized → Client';
+      const st = inspHeaders.find(l => l.id === 'r-status');
+      if (st) st.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepRL(stepNum) {
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = '⑦ Limitador: quota EXCEEDED';
       break;
+    case 8:
+      inspStepLabel = '⑧ IPP → Gateway (rate limited)';
+      setInspPhase('error');
+      inspHeaders = [
+        { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+        { v: 'Retry-After: 60', s: 'err', id: 'r-retry' },
+      ];
+      inspBody = [
+        { v: '"error": "rate_limited"', s: 'err', id: 'r-err' },
+        { v: '"message": "Token quota exceeded"', s: 'err', id: 'r-msg' },
+        { v: '"retry_after": 60', s: 'err', id: 'r-ra' },
+      ];
+      inspCycle = [];
+      break;
+    case 9: {
+      inspStepLabel = '⑨ 429 Too Many Requests → Client';
+      const st = inspHeaders.find(l => l.id === 'r-status');
+      if (st) st.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepInc(stepNum) {
+  switch (stepNum) {
+    case 9:
+      inspStepLabel = '⑨ model-provider-resolver (InferencePool)';
+      inspCycle = [
+        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
+        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 10:
+      inspStepLabel = '⑩ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ base-model-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Base-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xbase' });
+      break;
+    case 12: {
+      inspStepLabel = '⑫ IPP → Gateway (request ready)';
+      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
+      if (xm) xm.s = 'highlight';
+      const xb = inspHeaders.find(l => l.id === 'h-xbase');
+      if (xb) xb.s = 'highlight';
+      break; }
+    case 13:
+      inspStepLabel = '⑬ Gateway → EPP (ext_proc)';
+      break;
+    case 14:
+      inspStepLabel = '⑭ EPP selects P/D workers';
+      break;
+    case 15:
+      inspStepLabel = '⑮ EPP → Gateway (pods selected)';
+      break;
+    case 16:
+      inspStepLabel = '⑯ Gateway → Sidecar';
+      break;
+    case 17:
+      inspStepLabel = '⑰ Sidecar coordinates P/D';
+      break;
+    case 18:
+      inspStepLabel = '⑱ Sidecar → Prefill Pod B';
+      break;
+    case 19:
+      inspStepLabel = '⑲ Prefill processing';
+      break;
+    case 20:
+      inspStepLabel = '⑳ Prefill → Sidecar (KV metadata ready)';
+      break;
+    case 21:
+      inspStepLabel = '㉑ Sidecar → Decode Pod A';
+      break;
+    case 22:
+      inspStepLabel = '㉒ Decode requests KVs via NIXL';
+      break;
+    case 23:
+      inspStepLabel = '㉓ NIXL returns KV cache (RDMA)';
+      break;
+    case 24:
+      inspStepLabel = '㉔ Decode → Gateway (response)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 25:
+      inspStepLabel = '㉕ Gateway → EPP (response)';
+      break;
+    case 26:
+      inspStepLabel = '㉖ EPP response plugins';
+      break;
+    case 27:
+      inspStepLabel = '㉗ EPP → Gateway (response)';
+      break;
+    case 28:
+      inspStepLabel = '㉘ Gateway → IPP (response)';
+      break;
+    case 29:
+      inspStepLabel = '㉙ guardrails (response)';
+      break;
+    case 30: {
+      inspStepLabel = '㉚ IPP → Gateway (response)';
+      const ro = inspBody.find(l => l.id === 'r-obj');
+      if (ro) ro.s = 'highlight';
+      break; }
+    case 31: {
+      inspStepLabel = '㉛ IPP reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 32:
+      inspStepLabel = '㉜ Limitador: report token count';
+      break;
+    case 33: {
+      inspStepLabel = '㉝ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
+// Shared inspector helper for the 22-step IPP sub-flow
+function inspInferSubflow(stepNum, base) {
+  const off = stepNum - base;
+  if (off < 0 || off > 21) return false;
+  const labels = [
+    'inference-caller → Gateway',
+    'Gateway → IPP (nested inference)',
+    'Auth — skipped (authenticated at intake)',
+    'MaaS API — skipped',
+    'MaaS API — skipped',
+    'Rate Limit — skipped (checked at intake)',
+    'guardrails — skipped (no history context in IPP)',
+    'intelligent-model-selection — skipped (invariant)',
+    'model-provider-resolver — skipped (resolved at intake)',
+    'body-field-to-header — skipped (invariant)',
+    'api-translation: OpenAI → Anthropic format',
+    'apikey-injection — skipped (credential cached)',
+    'IPP → Gateway (mutated request)',
+    'Gateway → Anthropic',
+    'Anthropic responds',
+    'Gateway → IPP (response processing)',
+    'api-translation: Anthropic → OpenAI response',
+    'guardrails — skipped (done in agentic loop)',
+    'IPP → Gateway (translated response)',
+    'Rate Limit reads usage.total_tokens',
+    'Rate Limit reports token count',
+    'Gateway → Agentic Loop (model response)',
+  ];
+  inspStepLabel = cn(stepNum) + ' ' + labels[off];
+  return true;
+}
+
+function inspStepRespSimple(stepNum) {
+  if (inspInferSubflow(stepNum, 11)) {
+    if (stepNum === 11) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
+    if (stepNum === 25) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"text","text":"Transformers..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
+      break;
+    case 8:
+      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
+      break;
+    case 9:
+      inspStepLabel = cn(9) + ' request-validator';
+      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = false', s: 'add', id: 'c-tools' }];
+      break;
+    case 10:
+      inspStepLabel = cn(10) + ' api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspBody = [{ v: '"messages": [{"role":"user","content":"Explain..."}]', s: 'add', id: 'b-msgs' }];
+      break;
+    case 33:
+      inspStepLabel = cn(33) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [{"type":"message","content":"Transformers..."}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = []', s: 'add', id: 'c-routing' }];
+      break;
+    case 34:
+      inspStepLabel = cn(34) + ' loop-controller: stop_completed';
+      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
+      break;
+    case 35:
+      inspStepLabel = cn(35) + ' response-assembler';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Transformers..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":12,"output_tokens":85}', s: 'add', id: 'r-usage' }];
+      inspCycle = [];
+      break;
+    case 36:
+      inspStepLabel = cn(36) + ' response-store: persist';
+      inspBody.push({ v: '"id": "resp_abc123"', s: 'add', id: 'r-id' });
+      break;
+    case 37:
+      inspStepLabel = cn(37) + ' response-store → Response Store';
+      break;
+    case 38:
+      inspStepLabel = cn(38) + ' Response Store → response-store';
+      break;
+    case 39: {
+      inspStepLabel = cn(39) + ' Agentic Loop → Gateway';
+      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
+      break; }
+    case 40: {
+      inspStepLabel = cn(40) + ' Response to client (Responses API)';
+      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepRespRag(stepNum) {
+  if (inspInferSubflow(stepNum, 15)) {
+    if (stepNum === 15) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
+    if (stepNum === 29) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"tool_use","name":"file_search",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  if (inspInferSubflow(stepNum, 44)) {
+    if (stepNum === 44) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
+    if (stepNum === 58) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"text","text":"Based on Q4 docs..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
+      break;
+    case 8:
+      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
+      break;
+    case 9:
+      inspStepLabel = cn(9) + ' request-validator';
+      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'has_conversation = true', s: 'add', id: 'c-conv' }];
+      break;
+    case 10:
+      inspStepLabel = cn(10) + ' conversation-manager: load';
+      inspCycle.push({ v: 'conversation_items = [...]', s: 'add', id: 'c-items' });
+      inspCycle.push({ v: 'stored_messages = [...]', s: 'add', id: 'c-msgs' });
+      break;
+    case 11:
+      inspStepLabel = cn(11) + ' conversation-manager → Conversation Store';
+      break;
+    case 12:
+      inspStepLabel = cn(12) + ' Conversation Store → conversation-manager';
+      break;
+    case 13:
+      inspStepLabel = cn(13) + ' tool-registry: file_search';
+      inspCycle.push({ v: 'tools = [{type:"file_search",vs_ids:[...]}]', s: 'add', id: 'c-treg' });
+      break;
+    case 14:
+      inspStepLabel = cn(14) + ' api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      inspBody = [{ v: '"messages": [{conv_history},{user_input}]', s: 'add', id: 'b-msgs' }, { v: '"tools": [{"name":"file_search",...}]', s: 'add', id: 'b-tdef' }];
+      break;
+    case 37:
+      inspStepLabel = cn(37) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [{"type":"file_search_call",...}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [{type:"file_search"}]', s: 'add', id: 'c-routing' }];
+      break;
+    case 38:
+      inspStepLabel = cn(38) + ' tool-call-handler: file_search';
+      { const rt = inspCycle.find(l => l.id === 'c-routing'); if (rt) rt.s = 'highlight'; }
+      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
+      break;
+    case 39:
+      inspStepLabel = cn(39) + ' loop-controller: continue';
+      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
+      break;
+    case 40:
+      inspStepLabel = cn(40) + ' server-tool-executor: file_search';
+      inspBody = [{ v: '"output": [{"type":"file_search_call",...}]', s: 'keep', id: 'b-output' }, { v: '"file_search_result": {chunks:[...],citations:[...]}', s: 'add', id: 'b-fs-result' }];
+      break;
+    case 41:
+      inspStepLabel = cn(41) + ' server-tool-executor → File Service';
+      break;
+    case 42:
+      inspStepLabel = cn(42) + ' File Service → server-tool-executor';
+      break;
+    case 43:
+      inspStepLabel = cn(43) + ' ⟳ Loop back: api-translation (request)';
+      inspBody = [{ v: '"messages": [{...},{file_search_result},{...}]', s: 'add', id: 'b-msgs2' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 1', s: 'add', id: 'c-tc' }];
+      break;
+    case 66:
+      inspStepLabel = cn(66) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [{"type":"message","content":"Q4 results..."}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
+      break;
+    case 67:
+      inspStepLabel = cn(67) + ' tool-call-handler: no tool calls';
+      break;
+    case 68:
+      inspStepLabel = cn(68) + ' loop-controller: stop_completed';
+      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
+      break;
+    case 69:
+      inspStepLabel = cn(69) + ' response-assembler';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Q4 results..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":120,"output_tokens":65}', s: 'add', id: 'r-usage' }];
+      inspCycle = [];
+      break;
+    case 70:
+      inspStepLabel = cn(70) + ' response-store: persist';
+      inspBody.push({ v: '"id": "resp_rag456"', s: 'add', id: 'r-id' });
+      break;
+    case 71:
+      inspStepLabel = cn(71) + ' response-store → Response Store';
+      break;
+    case 72:
+      inspStepLabel = cn(72) + ' Response Store → response-store';
+      break;
+    case 73:
+      inspStepLabel = cn(73) + ' conversation-manager: save';
+      inspBody.push({ v: '"conversation": "my-session-001"', s: 'add', id: 'r-conv' });
+      break;
+    case 74:
+      inspStepLabel = cn(74) + ' conversation-manager → Conversation Store';
+      break;
+    case 75:
+      inspStepLabel = cn(75) + ' Conversation Store → conversation-manager';
+      break;
+    case 76: {
+      inspStepLabel = cn(76) + ' Agentic Loop → Gateway';
+      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
+      break; }
+    case 77: {
+      inspStepLabel = cn(77) + ' Response to client (Responses API)';
+      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepRespMcp(stepNum) {
+  if (inspInferSubflow(stepNum, 14)) {
+    if (stepNum === 14) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
+    if (stepNum === 28) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"tool_use","name":"get_weather",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  if (inspInferSubflow(stepNum, 43)) {
+    if (stepNum === 43) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
+    if (stepNum === 57) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"text","text":"It\'s 72F and sunny..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
+      break;
+    case 8:
+      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
+      break;
+    case 9:
+      inspStepLabel = cn(9) + ' request-validator';
+      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'is_streaming = true', s: 'add', id: 'c-stream' }];
+      break;
+    case 10:
+      inspStepLabel = cn(10) + ' tool-registry: MCP discovery';
+      inspCycle.push({ v: 'mcp_tools = ["get_weather","get_forecast"]', s: 'add', id: 'c-mcp' });
+      break;
+    case 11:
+      inspStepLabel = cn(11) + ' tool-registry → MCP Server (discovery)';
+      break;
+    case 12:
+      inspStepLabel = cn(12) + ' MCP Server → tool-registry';
+      break;
+    case 13:
+      inspStepLabel = cn(13) + ' api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      inspBody.find(l => l.id === 'b-input').s = 'del';
+      inspBody.push({ v: '"messages": [{"role":"user","content":"Find weather"}]', s: 'add', id: 'b-msgs' });
+      break;
+    case 36:
+      inspStepLabel = cn(36) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [{"type":"mcp_call","name":"get_weather",...}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [{type:"mcp",name:"get_weather"}]', s: 'add', id: 'c-routing' }];
+      break;
+    case 37:
+      inspStepLabel = cn(37) + ' tool-call-handler: MCP tool detected';
+      { const rt = inspCycle.find(l => l.id === 'c-routing'); if (rt) rt.s = 'highlight'; }
+      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
+      break;
+    case 38:
+      inspStepLabel = cn(38) + ' loop-controller: continue';
+      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
+      break;
+    case 39:
+      inspStepLabel = cn(39) + ' mcp-executor: execute MCP tool';
+      inspBody = [{ v: '"output": [{"type":"mcp_call","name":"get_weather",...}]', s: 'keep', id: 'b-output' }, { v: '"mcp_result": {"temp":"72F","condition":"sunny"}', s: 'add', id: 'b-mcp-result' }];
+      { const ca = inspCycle.find(l => l.id === 'c-action'); if (ca) ca.s = 'highlight'; }
+      break;
+    case 40:
+      inspStepLabel = cn(40) + ' mcp-executor → MCP Server';
+      break;
+    case 41:
+      inspStepLabel = cn(41) + ' MCP Server → mcp-executor';
+      break;
+    case 42:
+      inspStepLabel = cn(42) + ' ⟳ Loop back: api-translation (request)';
+      inspBody = [{ v: '"messages": [{...},{tool_result},{...}]', s: 'add', id: 'b-msgs2' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 1', s: 'add', id: 'c-tc' }];
+      break;
+    case 65:
+      inspStepLabel = cn(65) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [{"type":"message","content":"72F, sunny"}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
+      break;
+    case 66:
+      inspStepLabel = cn(66) + ' tool-call-handler: no tool calls';
+      break;
+    case 67:
+      inspStepLabel = cn(67) + ' loop-controller: stop_completed';
+      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
+      break;
+    case 68:
+      inspStepLabel = cn(68) + ' response-assembler';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"72F, sunny"}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":45,"output_tokens":18}', s: 'add', id: 'r-usage' }];
+      inspCycle = [];
+      break;
+    case 69:
+      inspStepLabel = cn(69) + ' response-store: persist';
+      inspBody.push({ v: '"id": "resp_abc123"', s: 'add', id: 'r-id' });
+      break;
+    case 70:
+      inspStepLabel = cn(70) + ' response-store → Response Store';
+      break;
+    case 71:
+      inspStepLabel = cn(71) + ' Response Store → response-store';
+      break;
+    case 72: {
+      inspStepLabel = cn(72) + ' Agentic Loop → Gateway';
+      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
+      break; }
+    case 73: {
+      inspStepLabel = cn(73) + ' Response to client (Responses API)';
+      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepRespBg(stepNum) {
+  if (inspInferSubflow(stepNum, 19)) {
+    if (stepNum === 19) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
+    if (stepNum === 33) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"tool_use","name":"file_search"},{"type":"tool_use","name":"mcp_tool"}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  if (inspInferSubflow(stepNum, 50)) {
+    if (stepNum === 50) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
+    if (stepNum === 64) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"text","text":"Analysis complete..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
+      break;
+    case 8:
+      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
+      break;
+    case 9:
+      inspStepLabel = cn(9) + ' request-validator';
+      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'is_background = true', s: 'add', id: 'c-bg' }];
+      break;
+    case 10:
+      inspStepLabel = cn(10) + ' tool-registry: file_search + MCP';
+      inspCycle.push({ v: 'tools = [file_search, mcp]', s: 'add', id: 'c-treg' });
+      break;
+    case 11:
+      inspStepLabel = cn(11) + ' tool-registry → MCP Server (discovery)';
+      break;
+    case 12:
+      inspStepLabel = cn(12) + ' MCP Server → tool-registry';
+      break;
+    case 13:
+      inspStepLabel = cn(13) + ' response-store: queue response';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "queued"', s: 'add', id: 'r-stat' }, { v: '"id": "resp_bg789"', s: 'add', id: 'r-id' }];
+      inspCycle = [];
+      break;
+    case 14:
+      inspStepLabel = cn(14) + ' response-store → Response Store (queue)';
+      break;
+    case 15:
+      inspStepLabel = cn(15) + ' Response Store → response-store';
+      break;
+    case 16: {
+      inspStepLabel = cn(16) + ' Agentic Loop → Gateway (queued)';
+      const rs = inspBody.find(l => l.id === 'r-stat'); if (rs) rs.s = 'highlight';
+      break; }
+    case 17: {
+      inspStepLabel = cn(17) + ' Client receives queued response';
+      const rid = inspBody.find(l => l.id === 'r-id'); if (rid) rid.s = 'highlight';
+      break; }
+    case 18:
+      inspStepLabel = cn(18) + ' [async] api-translation (request)';
+      setInspPhase('request');
+      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }, { v: 'POST /v1/messages', s: 'add', id: 'h-path2' }];
+      inspBody = [{ v: '"messages": [{"role":"user","content":"Analyze Q4"}]', s: 'add', id: 'b-msgs' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'add', id: 'c-iter' }, { v: 'is_background = true', s: 'keep', id: 'c-bg' }];
+      break;
+    case 41:
+      inspStepLabel = cn(41) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }];
+      inspBody = [{ v: '"output": [file_search_call, mcp_call]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [file_search, mcp]', s: 'add', id: 'c-routing' }];
+      break;
+    case 42:
+      inspStepLabel = cn(42) + ' tool-call-handler: tools detected';
+      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
+      break;
+    case 43:
+      inspStepLabel = cn(43) + ' server-tool-executor: file_search';
+      inspBody = [{ v: '"file_search_result": {chunks:[...]}', s: 'add', id: 'b-fs' }];
+      break;
+    case 44:
+      inspStepLabel = cn(44) + ' server-tool-executor → File Service';
+      break;
+    case 45:
+      inspStepLabel = cn(45) + ' File Service → server-tool-executor';
+      break;
+    case 46:
+      inspStepLabel = cn(46) + ' mcp-executor: MCP tool';
+      inspBody.push({ v: '"mcp_result": {"data":"..."}', s: 'add', id: 'b-mcp' });
+      break;
+    case 47:
+      inspStepLabel = cn(47) + ' mcp-executor → MCP Server';
+      break;
+    case 48:
+      inspStepLabel = cn(48) + ' MCP Server → mcp-executor';
+      break;
+    case 49:
+      inspStepLabel = cn(49) + ' ⟳ Loop back: api-translation (request)';
+      inspBody = [{ v: '"messages": [{...},{tool_results},{...}]', s: 'add', id: 'b-msgs2' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 2', s: 'add', id: 'c-tc' }];
+      break;
+    case 72:
+      inspStepLabel = cn(72) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }];
+      inspBody = [{ v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
+      break;
+    case 73:
+      inspStepLabel = cn(73) + ' loop-controller: stop_completed';
+      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
+      break;
+    case 74:
+      inspStepLabel = cn(74) + ' response-assembler';
+      setInspPhase('response');
+      inspHeaders = [{ v: '[stored response updated]', s: 'keep', id: 'r-async' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":200,"output_tokens":120}', s: 'add', id: 'r-usage' }];
+      inspCycle = [];
+      break;
+    case 75:
+      inspStepLabel = cn(75) + ' response-store: update stored response';
+      inspBody.push({ v: '"id": "resp_bg789"', s: 'add', id: 'r-id' });
+      break;
+    case 76:
+      inspStepLabel = cn(76) + ' response-store → Response Store (update)';
+      break;
+    case 77:
+      inspStepLabel = cn(77) + ' Response Store → response-store';
+      break;
+    case 78:
+      inspStepLabel = cn(78) + ' Client polls: GET /v1/responses/{id}';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'GET /v1/responses/resp_bg789', s: 'add', id: 'h-poll' }, { v: 'Authorization: Bearer sk-oai-abc123...', s: 'add', id: 'h-auth' }];
+      inspBody = [];
+      break;
+    case 79:
+      inspStepLabel = cn(79) + ' Gateway → Client: completed response';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'keep', id: 'r-obj' }, { v: '"status": "completed"', s: 'highlight', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'keep', id: 'r-output' }];
+      break;
+  }
+}
+
+function inspStepRespFull(stepNum) {
+  if (inspInferSubflow(stepNum, 20)) {
+    if (stepNum === 20) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
+    if (stepNum === 34) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [tool_use:file_search, tool_use:mcp, tool_use:function]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  if (inspInferSubflow(stepNum, 55)) {
+    if (stepNum === 55) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
+    if (stepNum === 69) {
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"content": [{"type":"tool_use","name":"get_weather",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
+    }
+    return;
+  }
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
+      break;
+    case 8:
+      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
+      break;
+    case 9:
+      inspStepLabel = cn(9) + ' request-validator';
+      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'has_conversation = true', s: 'add', id: 'c-conv' }, { v: 'is_streaming = true', s: 'add', id: 'c-stream' }];
+      break;
+    case 10:
+      inspStepLabel = cn(10) + ' conversation-manager: load';
+      inspCycle.push({ v: 'conversation_items = [...]', s: 'add', id: 'c-items' });
+      break;
+    case 11:
+      inspStepLabel = cn(11) + ' conversation-manager → Conversation Store';
+      break;
+    case 12:
+      inspStepLabel = cn(12) + ' Conversation Store → conversation-manager';
+      break;
+    case 13:
+      inspStepLabel = cn(13) + ' tool-registry: all tools';
+      inspCycle.push({ v: 'tools = [file_search, mcp, function]', s: 'add', id: 'c-treg' });
+      break;
+    case 14:
+      inspStepLabel = cn(14) + ' tool-registry → MCP Server (discovery)';
+      break;
+    case 15:
+      inspStepLabel = cn(15) + ' MCP Server → tool-registry';
+      break;
+    case 16:
+      inspStepLabel = cn(16) + ' guardrails: input check';
+      inspCycle.push({ v: 'guardrails_input = "pass"', s: 'add', id: 'c-gin' });
+      break;
+    case 17:
+      inspStepLabel = cn(17) + ' guardrails → NeMo Guardrails (input)';
+      break;
+    case 18:
+      inspStepLabel = cn(18) + ' NeMo Guardrails → guardrails';
+      break;
+    case 19:
+      inspStepLabel = cn(19) + ' api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      inspBody = [{ v: '"messages": [{conv},{user_input}]', s: 'add', id: 'b-msgs' }, { v: '"tools": [file_search, mcp_tools, function]', s: 'add', id: 'b-tdef' }];
+      break;
+    case 42:
+      inspStepLabel = cn(42) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [file_search_call, mcp_call, function_call]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [file_search, mcp, function]', s: 'add', id: 'c-routing' }];
+      break;
+    case 43:
+      inspStepLabel = cn(43) + ' guardrails: output check';
+      inspCycle.push({ v: 'guardrails_output = "pass"', s: 'add', id: 'c-gout' });
+      break;
+    case 44:
+      inspStepLabel = cn(44) + ' guardrails → NeMo Guardrails (output)';
+      break;
+    case 45:
+      inspStepLabel = cn(45) + ' NeMo Guardrails → guardrails';
+      break;
+    case 46:
+      inspStepLabel = cn(46) + ' tool-call-handler: mixed tools';
+      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
+      inspCycle.push({ v: 'has_function_tools = true', s: 'add', id: 'c-ft' });
+      break;
+    case 47:
+      inspStepLabel = cn(47) + ' loop-controller: continue (server-side first)';
+      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
+      break;
+    case 48:
+      inspStepLabel = cn(48) + ' server-tool-executor: file_search';
+      inspBody = [{ v: '"file_search_result": {chunks:[...],citations:[...]}', s: 'add', id: 'b-fs' }];
+      break;
+    case 49:
+      inspStepLabel = cn(49) + ' server-tool-executor → File Service';
+      break;
+    case 50:
+      inspStepLabel = cn(50) + ' File Service → server-tool-executor';
+      break;
+    case 51:
+      inspStepLabel = cn(51) + ' mcp-executor: MCP tool';
+      inspBody.push({ v: '"mcp_result": {"data":"..."}', s: 'add', id: 'b-mcp' });
+      break;
+    case 52:
+      inspStepLabel = cn(52) + ' mcp-executor → MCP Server';
+      break;
+    case 53:
+      inspStepLabel = cn(53) + ' MCP Server → mcp-executor';
+      break;
+    case 54:
+      inspStepLabel = cn(54) + ' ⟳ Loop back: api-translation (request)';
+      inspBody = [{ v: '"messages": [{...},{tool_results},{...}]', s: 'add', id: 'b-msgs2' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 2', s: 'add', id: 'c-tc' }];
+      break;
+    case 77:
+      inspStepLabel = cn(77) + ' api-translation (response)';
+      setInspPhase('request');
+      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
+      inspBody = [{ v: '"output": [function_call:"get_weather"]', s: 'add', id: 'b-output' }];
+      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'model emits function_call: get_weather', s: 'add', id: 'c-fc' }];
+      break;
+    case 78:
+      inspStepLabel = cn(78) + ' tool-call-handler: function → yield';
+      inspCycle.push({ v: 'has_function_tools = true', s: 'add', id: 'c-ft2' });
+      inspCycle.push({ v: 'has_server_side_tools = false', s: 'add', id: 'c-nosst' });
+      break;
+    case 79:
+      inspStepLabel = cn(79) + ' loop-controller: stop_yield';
+      inspCycle.push({ v: 'loop_action = "stop_yield"', s: 'add', id: 'c-yield' });
+      break;
+    case 80:
+      inspStepLabel = cn(80) + ' response-assembler: function_call in output';
+      setInspPhase('response');
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
+      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{message},{function_call:"get_weather"}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":250,"output_tokens":40}', s: 'add', id: 'r-usage' }];
+      inspCycle = [];
+      break;
+    case 81:
+      inspStepLabel = cn(81) + ' response-store: persist';
+      inspBody.push({ v: '"id": "resp_full001"', s: 'add', id: 'r-id' });
+      break;
+    case 82:
+      inspStepLabel = cn(82) + ' response-store → Response Store';
+      break;
+    case 83:
+      inspStepLabel = cn(83) + ' Response Store → response-store';
+      break;
+    case 84:
+      inspStepLabel = cn(84) + ' conversation-manager: save';
+      inspBody.push({ v: '"conversation": "my-session-001"', s: 'add', id: 'r-conv' });
+      break;
+    case 85:
+      inspStepLabel = cn(85) + ' conversation-manager → Conversation Store';
+      break;
+    case 86:
+      inspStepLabel = cn(86) + ' Conversation Store → conversation-manager';
+      break;
+    case 87: {
+      inspStepLabel = cn(87) + ' Agentic Loop → Gateway';
+      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
+      break; }
+    case 88: {
+      inspStepLabel = cn(88) + ' Response to client (function_call)';
+      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
+      break; }
   }
 }
 
 function inspStep(stepNum) {
   resetStyles();
-  if (activeFlow === 'simple') inspStepSimple(stepNum);
-  else if (activeFlow === 'agentic') inspStepAgentic(stepNum);
-  else if (activeFlow === 'blocked') inspStepBlocked(stepNum);
+  if (stepNum >= 5 && activeFlow === 'auth') {
+    inspStepAuth(stepNum);
+    renderInsp();
+    return;
+  }
+  if (stepNum >= 7 && activeFlow === 'rl') {
+    inspStepRL(stepNum);
+    renderInsp();
+    return;
+  }
+  if (stepNum >= 9 && activeFlow === 'inc') {
+    inspStepInc(stepNum);
+    renderInsp();
+    return;
+  }
+  if (stepNum >= 7 && activeFlow.startsWith('resp_')) {
+    switch(activeFlow) {
+      case 'resp_simple': inspStepRespSimple(stepNum); break;
+      case 'resp_rag': inspStepRespRag(stepNum); break;
+      case 'resp_mcp': inspStepRespMcp(stepNum); break;
+      case 'resp_bg': inspStepRespBg(stepNum); break;
+      case 'resp_full': inspStepRespFull(stepNum); break;
+    }
+    renderInsp();
+    return;
+  }
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '① Incoming Request';
+      break;
+    case 2:
+      inspStepLabel = '② Gateway → ext_proc (IPP)';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      break;
+    case 3:
+      inspStepLabel = '③ Authorino validates API key';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      break;
+    case 4:
+      inspStepLabel = '④ IPP → MaaS API (key validation)';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      break;
+    case 5:
+      inspStepLabel = '⑤ MaaS API responds: key valid';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
+      break;
+    case 6:
+      inspStepLabel = '⑥ Limitador checks token quota';
+      break;
+    case 7:
+      inspStepLabel = '⑦ guardrails (request)';
+      break;
+    case 8:
+      inspStepLabel = '⑧ intelligent-model-selection [tbd]';
+      break;
+    case 9:
+      inspStepLabel = '⑨ model-provider-resolver';
+      inspCycle = [
+        { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
+        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 10:
+      inspStepLabel = '⑩ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
+      break;
+    case 12:
+      inspStepLabel = '⑫ apikey-injection';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 13: {
+      inspStepLabel = '⑬ IPP → Gateway (mutated request)';
+      const ph2 = inspHeaders.find(l => l.id === 'h-path2');
+      if (ph2) ph2.s = 'highlight';
+      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
+      if (xapi) xapi.s = 'highlight';
+      break; }
+    case 14:
+      inspStepLabel = '⑭ Gateway routes to Anthropic';
+      break;
+    case 15:
+      inspStepLabel = '⑮ Anthropic responds';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 16:
+      inspStepLabel = '⑯ Gateway → IPP (response)';
+      break;
+    case 17:
+      inspStepLabel = '⑰ api-translation (response)';
+      inspBody.find(l => l.id === 'r-type').s = 'del';
+      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
+      inspBody.find(l => l.id === 'r-content').s = 'del';
+      inspBody.push({ v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add', id: 'r-choices' });
+      inspBody.find(l => l.id === 'r-stop').s = 'del';
+      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
+      inspBody.find(l => l.id === 'r-usage').s = 'del';
+      inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
+      break;
+    case 18:
+      inspStepLabel = '⑱ guardrails (response)';
+      break;
+    case 19: {
+      inspStepLabel = '⑲ IPP → Gateway (translated response)';
+      const robj = inspBody.find(l => l.id === 'r-obj');
+      if (robj) robj.s = 'highlight';
+      const rch = inspBody.find(l => l.id === 'r-choices');
+      if (rch) rch.s = 'highlight';
+      break; }
+    case 20: {
+      inspStepLabel = '⑳ IPP reads usage.total_tokens';
+      const u2 = inspBody.find(l => l.id === 'r-usage2');
+      if (u2) u2.s = 'highlight';
+      break; }
+    case 21:
+      inspStepLabel = '㉑ Limitador: report token count';
+      break;
+    case 22: {
+      inspStepLabel = '㉒ Response to Client (OpenAI format)';
+      const robj2 = inspBody.find(l => l.id === 'r-obj');
+      if (robj2) robj2.s = 'highlight';
+      const rch2 = inspBody.find(l => l.id === 'r-choices');
+      if (rch2) rch2.s = 'highlight';
+      break; }
+  }
   renderInsp();
 }
 
 // ================================================================
 // FLOW DEFINITIONS
 // ================================================================
-let activeFlow = 'simple';
-
-const flowSimple = [
-  // 1. Client -> responses
-  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  // 2. responses -> Auth
-  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
-  // 3. Auth validates
-  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
-  // 4. Auth -> Input Limit
-  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
-  // 5. Input Limit -> MCP List Tools (goes UP)
-  { t: '5. Input Limit -> MCP List Tools', mode: 'arrow', f: 'input_limit', to: 'mcp_list', c: '#d2a8ff', num: 5,
-    fromTop: true, fromXOff: -30, toBottom: true },
-  // 6. MCP returns approved tools -> Input Limit (goes DOWN)
-  { t: '6. MCP returns approved tools -> Input Limit', mode: 'arrow', f: 'mcp_list', to: 'input_limit', c: '#d2a8ff', num: 6,
-    fromBottom: true, toTop: true, toXOff: 30 },
-  // 7. Input Limit -> Hydrate Prompt (goes UP)
-  { t: '7. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#d2a8ff', num: 7,
-    fromTop: true, fromXOff: 50, toBottom: true },
-  // 8. Hydrate Prompt: expand tools
-  { t: '8. Hydrate Prompt: expand prompt + function tools', mode: 'lightup', target: 'hydrate', badge: 8 },
-  // 9. Hydrate -> Guardrails Prep
-  { t: '9. Hydrate -> Guardrails Prep', mode: 'arrow', f: 'hydrate', to: 'gp_input', c: '#f0883e', num: 9 },
-  // 10. Guardrails Prep input
-  { t: '10. Guardrails Prep: prepare input checks', mode: 'lightup', target: 'gp_input', badge: 10 },
-  // 11. GP -> Input Guardrails
-  { t: '11. Guardrails Prep -> Input Guardrails', mode: 'arrow', f: 'gp_input', to: 'input_guard', c: '#f0883e', num: 11 },
-  // 12. Input Guardrails: check
-  { t: '12. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 12 },
-  // 13. Input Guardrails -> Convert (DOWN first, then LEFT along bottom, then DOWN to Convert)
-  { t: '13. Input Guardrails -> Connect to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
-    fromBottom: true, toLeft: true, speed: 2,
-    waypoints: [{x:985, y:280}, {x:60, y:280}, {x:60, y:375}] },
-  // 14. Connect to Model Router
-  { t: '14. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
-  // 15. Convert -> Inference
-  { t: '15. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 15 },
-  // 16. Inference processes
-  { t: '16. Inference: first pass', mode: 'lightup', target: 'inference', badge: 16 },
-  // 17. Inference -> Guardrails Prep output
-  { t: '17. Inference -> Guardrails Prep', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 17 },
-  // 18. Guardrails Prep output
-  { t: '18. Guardrails Prep: output content filter', mode: 'lightup', target: 'gp_output', badge: 18 },
-  // 19. GP -> Guardrails
-  { t: '19. Guardrails Prep -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 19 },
-  // 20. Guardrails output check
-  { t: '20. Guardrails: output check', mode: 'lightup', target: 'guardrails', badge: 20 },
-  // 21. Guardrails -> Output Limit
-  { t: '21. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 21 },
-  // 22. Output Limit
-  { t: '22. Output Limit: tool_use detected', mode: 'lightup', target: 'output_limit', badge: 22 },
-  // 23. Output Limit -> Tool Invocation
-  { t: '23. Output Limit -> Tool Invocation', mode: 'arrow', f: 'output_limit', to: 'tool_invoke', c: '#e3b341', num: 23,
-    fromBottom: true, toLeft: true, speed: 2,
-    waypoints: [{x:915, y:440}, {x:140, y:440}, {x:140, y:495}] },
-  // 24. Tool Invocation: call MCP server
-  { t: '24. Tool Invocation: call MCP / File / Search', mode: 'lightup', target: 'tool_invoke', badge: 24 },
-  // 25. Tool Invocation -> Assemble
-  { t: '25. Tool Invocation -> Assemble', mode: 'arrow', f: 'tool_invoke', to: 'assemble', c: '#e3b341', num: 25 },
-  // 26. Assemble: combine results
-  { t: '26. Assemble: combine tool results', mode: 'lightup', target: 'assemble', badge: 26 },
-  // 27. Assemble -> Convert (AGENTIC LOOP - red arrow goes around the loop boundary)
-  { t: '27. LOOP: Assemble -> Connect to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
-    fromRight: true, toLeft: true, speed: 2,
-    waypoints: [{x:1020, y:495}, {x:1020, y:310}, {x:60, y:310}, {x:60, y:375}] },
-  // 28. Agentic loop runs (flash the red boundary)
-  { t: '28. Agentic loop: re-inference pass 1', mode: 'lightup', target: 'loop_area', badge: '↻' },
-  // 29. Second loop iteration
-  { t: '29. Agentic loop: re-inference pass 2', mode: 'lightup', target: 'loop_area', badge: '↻↻' },
-  // 30. Assemble -> Dehydrate (final output)
-  { t: '30. Assemble -> Dehydrate', mode: 'arrow', f: 'assemble', to: 'dehydrate', c: '#8b949e', num: 30,
-    fromRight: true, toLeft: true },
-  // 31. Dehydrate
-  { t: '31. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 31 },
-  // 32. Dehydrate -> Client
-  { t: '32. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 32 },
+let activeFlow = 'ext';
+const flowExt = [
+  // REQUEST PATH
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  // IPP policy plugins
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  // IPP request plugins
+  { t: '7. guardrails: request safety check', mode: 'lightup', target: 'p_rguard', badge: 7 },
+  { t: '8. intelligent-model-selection [tbd]', mode: 'lightup', target: 'p_ims', badge: 8 },
+  { t: '9. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 9 },
+  { t: '10. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 10 },
+  { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 11 },
+  { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
+  { t: '13. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '14. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
+  // RESPONSE PATH
+  { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '16. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  // IPP response plugins
+  { t: '17. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
+  { t: '18. guardrails: response safety check', mode: 'lightup', target: 'p_resp_guard', badge: 18 },
+  { t: '19. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 19, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  // TOKEN USAGE REPORTING
+  { t: '20. IPP reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 20 },
+  { t: '21. IPP reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 21 },
+  { t: '22. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowAgentic = [
-  // Steps 1-12 same as simple
-  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
-  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
-  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
-    fromBottom: true, toTop: true },
-  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
-  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
-  { t: '8. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 8 },
-  { t: '9. Input Guardrails -> Convert', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 9,
-    fromBottom: true, toTop: true },
-  { t: '10. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
-  { t: '11. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 11 },
-  { t: '12. Inference: first pass', mode: 'lightup', target: 'inference', badge: 12 },
-  // 13. Inference returns tool_use
-  { t: '13. Inference returns tool_use', mode: 'lightup', target: 'inference', badge: 'T', errColor: '#e3b341' },
-  // 14. Inference -> Tool Invocation (goes DOWN)
-  { t: '14. Inference -> Tool Invocation', mode: 'arrow', f: 'inference', to: 'tool_invoke', c: '#e3b341', num: 14,
-    fromBottom: true, toTop: true },
-  // 15. Tool Invocation: call MCP server
-  { t: '15. Tool Invocation: call MCP server', mode: 'lightup', target: 'tool_invoke', badge: 15 },
-  // 16. Tool Invocation -> Assemble
-  { t: '16. Tool Invocation -> Assemble', mode: 'arrow', f: 'tool_invoke', to: 'assemble', c: '#e3b341', num: 16 },
-  // 17. Assemble: combine results
-  { t: '17. Assemble: combine results', mode: 'lightup', target: 'assemble', badge: 17 },
-  // 18. Assemble -> Inference (the LOOP - curves right and up)
-  { t: '18. Assemble -> Inference (loop back)', mode: 'arrow', f: 'assemble', to: 'inference', c: '#e3b341', num: 18,
-    fromBottom: true,
-    toBottom: true, toXOff: 40,
-    waypoints: [{x:400, y:530}, {x:120, y:530}, {x:120, y:400}],
-    waypoints: [
-      { x: 420, y: 470 },
-      { x: 470, y: 440 },
-      { x: 470, y: 420 },
-    ]
-  },
-  // 19. Inference: second pass with tool results
-  { t: '19. Inference: second pass (with tool results)', mode: 'lightup', target: 'inference', badge: 19 },
-  // 20-28: same as simple 13-21
-  { t: '20. Inference -> GP output', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 20 },
-  { t: '21. GP output: content filter', mode: 'lightup', target: 'gp_output', badge: 21 },
-  { t: '22. GP -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 22 },
-  { t: '23. Guardrails output check', mode: 'lightup', target: 'guardrails', badge: 23 },
-  { t: '24. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 24 },
-  { t: '25. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 25 },
-  { t: '26. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 26,
-    fromBottom: true, toTop: true },
-  { t: '27. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 27 },
-  { t: '28. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 28 },
+const flowInc = [
+  // REQUEST PATH
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  // IPP policy plugins
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  // IPP request plugins (no api-translation, no apikey-injection for on-cluster)
+  { t: '7. guardrails: request safety check', mode: 'lightup', target: 'p_rguard', badge: 7 },
+  { t: '8. intelligent-model-selection [tbd]', mode: 'lightup', target: 'p_ims', badge: 8 },
+  { t: '9. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 9 },
+  { t: '10. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 10 },
+  { t: '11. base-model-to-header: resolve LoRA base model', mode: 'lightup', target: 'p_bmth', badge: 11 },
+  { t: '12. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  // On-cluster routing
+  { t: '13. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 13, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '14. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 14 },
+  { t: '15. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 15, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '16. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 16, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '17. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 17 },
+  { t: '18. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 18, fromRight: true, toLeft: true },
+  { t: '19. Prefill processing', mode: 'lightup', target: 'prefill', badge: 19 },
+  { t: '20. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 20, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '21. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 21, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '22. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 22, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '23. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 23, fromLeft: true, toRight: true, yOff: 8 },
+  // RESPONSE PATH
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '25. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 25, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '26. EPP response plugins', mode: 'lightup', target: 'sched', badge: 26 },
+  { t: '27. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  { t: '28. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 28, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '29. guardrails: response safety check', mode: 'lightup', target: 'p_resp_guard', badge: 29 },
+  { t: '30. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 30, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '31. IPP reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 31 },
+  { t: '32. IPP reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 32 },
+  { t: '33. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 33, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowBlocked = [
-  // Same request path as agentic flow
-  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
-  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
-  { t: '5. Input Limit -> MCP List Tools', mode: 'arrow', f: 'input_limit', to: 'mcp_list', c: '#d2a8ff', num: 5,
-    fromTop: true, fromXOff: -30, toBottom: true },
-  { t: '6. MCP returns approved tools -> Input Limit', mode: 'arrow', f: 'mcp_list', to: 'input_limit', c: '#d2a8ff', num: 6,
-    fromBottom: true, toTop: true, toXOff: 30 },
-  { t: '7. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#d2a8ff', num: 7,
-    fromTop: true, fromXOff: 50, toBottom: true },
-  { t: '8. Hydrate Prompt: expand prompt', mode: 'lightup', target: 'hydrate', badge: 8 },
-  { t: '9. Hydrate -> Guardrails Prep', mode: 'arrow', f: 'hydrate', to: 'gp_input', c: '#f0883e', num: 9 },
-  { t: '10. Guardrails Prep: scan input content', mode: 'lightup', target: 'gp_input', badge: 10 },
-  { t: '11. Guardrails Prep -> Input Guardrails', mode: 'arrow', f: 'gp_input', to: 'input_guard', c: '#f0883e', num: 11 },
-  // BLOCKED
-  { t: '12. Input Guardrails: BLOCKED — harmful content detected', mode: 'lightup', target: 'input_guard', badge: '✕', errColor: '#f85149' },
-  // Return error to client
-  { t: '13. Input Guardrails -> Client: 403 Forbidden', mode: 'arrow', f: 'input_guard', to: 'client', c: '#f85149', num: 13,
-    fromBottom: true, toRight: true,
-    waypoints: [{ x: 945, y: 150 }, { x: 945, y: 240 }, { x: 120, y: 240 }] },
+const flowAuth = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'auth', c: '#f85149', num: 5, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '6. Auth rejects request', mode: 'lightup', target: 'auth', badge: '✗', errColor: '#f85149' },
+  { t: '7. IPP → Gateway (auth failed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 7, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '8. Gateway → Client: 401 Unauthorized', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 8, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowMap = { simple: flowSimple, agentic: flowAgentic, blocked: flowBlocked };
-const flowLabels = { simple: 'Agentic Loop (Tool Call)', agentic: 'Agentic Loop (Tool Calls)', blocked: 'Input Guardrails Block' };
-const flowOrder = ['simple', 'agentic', 'blocked'];
-let flow = flowSimple;
+const flowRL = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Limitador: quota EXCEEDED', mode: 'lightup', target: 'rlimit', badge: '✗', errColor: '#f85149' },
+  { t: '8. IPP → Gateway (rate limited)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 8, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '9. Gateway → Client: 429 Too Many Requests', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 9, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// Shared Phase A steps for all Responses API flows (IPP policy chain)
+const respPhaseA = [
+  { t: '1. Client sends POST /v1/responses', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. IPP → Gateway (routes to Agentic Loop)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+];
+
+// Shared waypoints: inference-caller → Gateway (up from agentic loop to gateway)
+const wpInferToGw = [{x: 140, y: 569}, {x: 140, y: 230}, {x: 350, y: 230}];
+const wpAlToGw = [{x: 155, y: 747}, {x: 155, y: 190}, {x: 500, y: 190}];
+
+// Circled number helper for inspector labels (①-⑳, ㉑-㉟, ㊱-㊿, then fallback)
+function cn(n) {
+  if (n >= 1 && n <= 20) return String.fromCodePoint(0x245F + n);
+  if (n >= 21 && n <= 35) return String.fromCodePoint(0x3250 + n - 20);
+  if (n >= 36 && n <= 50) return String.fromCodePoint(0x32B0 + n - 35);
+  return '(' + n + ')';
+}
+
+// Full IPP sub-flow for inference calls (22 steps per iteration)
+// Replicates the Chat Completions External Model path through IPP
+function makeInferSubflow(n) {
+  return [
+    { t: n+'. inference-caller → Gateway', mode: 'arrow', f: 'al_inference', to: 'gw', c: '#58a6ff', num: n,
+      fromLeft: true, waypoints: wpInferToGw, toBottom: true, toXOff: -250 },
+    { t: (n+1)+'. Gateway → IPP (nested inference)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: n+1,
+      glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+    { t: (n+2)+'. Auth — skipped (authenticated at intake)', mode: 'lightup', target: 'auth', badge: n+2, skip: true },
+    { t: (n+3)+'. MaaS API — skipped', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: n+3,
+      fromLeft: true, toRight: true, yOff: -5, skip: true },
+    { t: (n+4)+'. MaaS API — skipped', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: n+4,
+      fromRight: true, toLeft: true, yOff: 5, skip: true },
+    { t: (n+5)+'. Rate Limit — skipped (checked at intake)', mode: 'lightup', target: 'rlimit', badge: n+5, skip: true },
+    { t: (n+6)+'. guardrails — skipped (no history context in IPP)', mode: 'lightup', target: 'p_rguard', badge: n+6, skip: true },
+    { t: (n+7)+'. intelligent-model-selection — skipped (invariant)', mode: 'lightup', target: 'p_ims', badge: n+7, skip: true },
+    { t: (n+8)+'. model-provider-resolver — skipped (resolved at intake)', mode: 'lightup', target: 'p_mpr', badge: n+8, skip: true },
+    { t: (n+9)+'. body-field-to-header — skipped (invariant)', mode: 'lightup', target: 'p_bfth', badge: n+9, skip: true },
+    { t: (n+10)+'. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: n+10 },
+    { t: (n+11)+'. apikey-injection — skipped (credential cached)', mode: 'lightup', target: 'p_aki', badge: n+11, skip: true },
+    { t: (n+12)+'. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: n+12,
+      fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+    { t: (n+13)+'. Gateway → Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: n+13,
+      fromLeft: true, toRight: true, yOff: -10 },
+    { t: (n+14)+'. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: n+14,
+      fromRight: true, toLeft: true, yOff: 10 },
+    { t: (n+15)+'. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: n+15,
+      fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+    { t: (n+16)+'. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: n+16 },
+    { t: (n+17)+'. guardrails — skipped (done in agentic loop)', mode: 'lightup', target: 'p_resp_guard', badge: n+17, skip: true },
+    { t: (n+18)+'. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: n+18,
+      fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+    { t: (n+19)+'. Rate Limit reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: n+19 },
+    { t: (n+20)+'. Rate Limit reports token count', mode: 'lightup', target: 'rlimit', badge: n+20 },
+    { t: (n+21)+'. Gateway → Agentic Loop (model response)', mode: 'arrow', f: 'gw', to: 'al_api_trans', c: '#3fb950', num: n+21,
+      fromBottom: true, fromXOff: -200, toTop: true },
+  ];
+}
+
+// ── Flow: Simple Completion (40 steps) ──
+const flowRespSimple = [
+  ...respPhaseA,
+  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
+  { t: '10. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 10 },
+  ...makeInferSubflow(11),
+  { t: '33. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 33 },
+  { t: '34. loop-controller: no tools → stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 34 },
+  { t: '35. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 35 },
+  { t: '36. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 36 },
+  { t: '37. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 37, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '38. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 38, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '39. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 39,
+    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  { t: '40. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 40, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// ── Flow: RAG + Conversation (77 steps) ──
+const flowRespRag = [
+  ...respPhaseA,
+  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
+  { t: '10. conversation-manager: load conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 10 },
+  { t: '11. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '12. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '13. tool-registry: register file_search', mode: 'lightup', target: 'al_tool_reg', badge: 13 },
+  { t: '14. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 14 },
+  ...makeInferSubflow(15),
+  { t: '37. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 37 },
+  { t: '38. tool-call-handler: file_search detected', mode: 'lightup', target: 'al_tool_handler', badge: 38 },
+  { t: '39. loop-controller: server-side tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 39 },
+  { t: '40. server-tool-executor: file_search → vector store', mode: 'lightup', target: 'al_srv_exec', badge: 40 },
+  { t: '41. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 41, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '42. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 42, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '43. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 43 },
+  ...makeInferSubflow(44),
+  { t: '66. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 66 },
+  { t: '67. tool-call-handler: no tool calls', mode: 'lightup', target: 'al_tool_handler', badge: 67 },
+  { t: '68. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 68 },
+  { t: '69. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 69 },
+  { t: '70. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 70 },
+  { t: '71. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 71, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '72. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 72, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '73. conversation-manager: save conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 73 },
+  { t: '74. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 74, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '75. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 75, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '76. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 76,
+    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  { t: '77. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 77, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// ── Flow: MCP Agent Loop (73 steps) ──
+const flowRespMcp = [
+  ...respPhaseA,
+  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
+  { t: '10. tool-registry: MCP tool discovery', mode: 'lightup', target: 'al_tool_reg', badge: 10 },
+  { t: '11. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '12. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '13. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 13 },
+  ...makeInferSubflow(14),
+  { t: '36. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 36 },
+  { t: '37. tool-call-handler: MCP tool call detected', mode: 'lightup', target: 'al_tool_handler', badge: 37 },
+  { t: '38. loop-controller: server-side tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 38 },
+  { t: '39. mcp-executor: execute MCP tool, append result', mode: 'lightup', target: 'al_mcp_exec', badge: 39 },
+  { t: '40. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 40, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '41. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 41, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '42. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 42 },
+  ...makeInferSubflow(43),
+  { t: '65. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 65 },
+  { t: '66. tool-call-handler: no tool calls', mode: 'lightup', target: 'al_tool_handler', badge: 66 },
+  { t: '67. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 67 },
+  { t: '68. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 68 },
+  { t: '69. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 69 },
+  { t: '70. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 70, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '71. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 71, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '72. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 72,
+    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  { t: '73. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 73, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// ── Flow: Background Processing (79 steps) ──
+const flowRespBg = [
+  ...respPhaseA,
+  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '9. request-validator (background: true)', mode: 'lightup', target: 'al_validator', badge: 9 },
+  { t: '10. tool-registry: file_search + MCP', mode: 'lightup', target: 'al_tool_reg', badge: 10 },
+  { t: '11. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '12. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '13. response-store: store queued response', mode: 'lightup', target: 'al_store', badge: 13 },
+  { t: '14. response-store → Response Store (queue)', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 14, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '15. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '16. Agentic Loop → Gateway (queued response)', mode: 'arrow', f: 'al_store', to: 'gw', c: '#d2a8ff', num: 16,
+    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  { t: '17. Gateway → Client: queued response (immediate)', mode: 'arrow', f: 'gw', to: 'user', c: '#d2a8ff', num: 17, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '18. [async] api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 18 },
+  ...makeInferSubflow(19),
+  { t: '41. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 41 },
+  { t: '42. tool-call-handler: file_search + MCP detected', mode: 'lightup', target: 'al_tool_handler', badge: 42 },
+  { t: '43. server-tool-executor: file_search', mode: 'lightup', target: 'al_srv_exec', badge: 43 },
+  { t: '44. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 44, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '45. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 45, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '46. mcp-executor: MCP tool', mode: 'lightup', target: 'al_mcp_exec', badge: 46 },
+  { t: '47. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 47, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '48. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 48, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '49. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 49 },
+  ...makeInferSubflow(50),
+  { t: '72. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 72 },
+  { t: '73. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 73 },
+  { t: '74. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 74 },
+  { t: '75. response-store: update stored response', mode: 'lightup', target: 'al_store', badge: 75 },
+  { t: '76. response-store → Response Store (update)', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 76, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '77. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 77, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '78. Client polls: GET /v1/responses/{id}', mode: 'arrow', f: 'user', to: 'gw', c: '#d2a8ff', num: 78, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '79. Gateway → Client: completed response', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 79, fromLeft: true, toRight: true, yOff: 20 },
+];
+
+// ── Flow: Full Advanced (88 steps) ──
+const flowRespFull = [
+  ...respPhaseA,
+  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
+  { t: '10. conversation-manager: load conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 10 },
+  { t: '11. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '12. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '13. tool-registry: file_search + MCP + function', mode: 'lightup', target: 'al_tool_reg', badge: 13 },
+  { t: '14. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '15. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '16. guardrails: input safety check', mode: 'lightup', target: 'al_guardrails', badge: 16 },
+  { t: '17. guardrails → NeMo Guardrails (input)', mode: 'arrow', f: 'al_guardrails', to: 'svc_guardrails', c: '#f0883e', num: 17, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '18. NeMo Guardrails → guardrails', mode: 'arrow', f: 'svc_guardrails', to: 'al_guardrails', c: '#f0883e', num: 18, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '19. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 19 },
+  ...makeInferSubflow(20),
+  { t: '42. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 42 },
+  { t: '43. guardrails: output safety check', mode: 'lightup', target: 'al_guardrails', badge: 43 },
+  { t: '44. guardrails → NeMo Guardrails (output)', mode: 'arrow', f: 'al_guardrails', to: 'svc_guardrails', c: '#f0883e', num: 44, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '45. NeMo Guardrails → guardrails', mode: 'arrow', f: 'svc_guardrails', to: 'al_guardrails', c: '#f0883e', num: 45, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '46. tool-call-handler: file_search + MCP + function', mode: 'lightup', target: 'al_tool_handler', badge: 46 },
+  { t: '47. loop-controller: mixed tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 47 },
+  { t: '48. server-tool-executor: file_search', mode: 'lightup', target: 'al_srv_exec', badge: 48 },
+  { t: '49. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 49, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '50. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 50, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '51. mcp-executor: MCP tool', mode: 'lightup', target: 'al_mcp_exec', badge: 51 },
+  { t: '52. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 52, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '53. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 53, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '54. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 54 },
+  ...makeInferSubflow(55),
+  { t: '77. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 77 },
+  { t: '78. tool-call-handler: function tool → yield', mode: 'lightup', target: 'al_tool_handler', badge: 78 },
+  { t: '79. loop-controller: stop_yield', mode: 'lightup', target: 'al_loop_ctrl', badge: 79 },
+  { t: '80. response-assembler: includes function_call', mode: 'lightup', target: 'al_assembler', badge: 80 },
+  { t: '81. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 81 },
+  { t: '82. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 82, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '83. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 83, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '84. conversation-manager: save conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 84 },
+  { t: '85. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 85, fromLeft: true, toRight: true, yOff: -5 },
+  { t: '86. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 86, fromRight: true, toLeft: true, yOff: 5 },
+  { t: '87. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 87,
+    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  { t: '88. Response to client (function_call in output)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 88, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowMap = {
+  ext: flowExt, inc: flowInc, auth: flowAuth, rl: flowRL,
+  resp_simple: flowRespSimple, resp_rag: flowRespRag, resp_mcp: flowRespMcp,
+  resp_bg: flowRespBg, resp_full: flowRespFull
+};
+const flowLabels = {
+  ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)',
+  auth: 'Auth Failure (401)', rl: 'Rate Limit (429)',
+  resp_simple: 'Simple Completion', resp_rag: 'RAG + Conversation',
+  resp_mcp: 'MCP Agent Loop', resp_bg: 'Background Processing',
+  resp_full: 'Full Advanced'
+};
+const flowOrder = ['ext', 'inc', 'auth', 'rl', 'resp_simple', 'resp_rag', 'resp_mcp', 'resp_bg', 'resp_full'];
+let flow = flowExt;
 
 function updateTitle() {
-  document.getElementById('flow-label').textContent = '- ' + flowLabels[activeFlow];
+  document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
 }
 
 // ================================================================
@@ -1286,6 +2449,14 @@ function cycleSpeed() {
   document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
 }
 
+function toggleLoop() {
+  loopMode = !loopMode;
+  const btn = document.getElementById('loop-btn');
+  btn.style.background = loopMode ? (isDark ? '#79c0ff22' : '#79c0ff18') : 'transparent';
+  btn.textContent = loopMode ? '⟳ Loop ON' : '⟳ Loop';
+  if (loopMode && !running && !paused) run();
+}
+
 function stepOpts(s) {
   return {
     fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
@@ -1301,29 +2472,6 @@ function stepLine(s) {
     fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
     yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
   };
-}
-
-let stepOnceMode = false;
-
-function stepOnce() {
-  if (running && !paused) {
-    paused = true; running = false;
-    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
-    updatePlayBtn();
-    return;
-  }
-  const f = flowMap[activeFlow];
-  if (runStepIndex === 0) {
-    initInspector();
-  }
-  if (runStepIndex >= f.length) {
-    doReset();
-    return;
-  }
-  stepOnceMode = true;
-  running = true; paused = false;
-  if (!animFrame) animate();
-  execStep();
 }
 
 function run() {
@@ -1357,6 +2505,16 @@ function execStep() {
   if (!running || paused || runStepIndex >= flow.length) {
     if (runStepIndex >= flow.length) {
       running = false; paused = false; updatePlayBtn();
+      if (loopMode) {
+        stepTimer = setTimeout(() => {
+          const idx = flowOrder.indexOf(activeFlow);
+          activeFlow = flowOrder[(idx + 1) % flowOrder.length];
+          flow = flowMap[activeFlow];
+          document.getElementById('flow-select').value = activeFlow;
+          updateTitle();
+          doReset(); run();
+        }, 3000 / playbackSpeed);
+      }
     }
     return;
   }
@@ -1364,16 +2522,28 @@ function execStep() {
   const s = flow[si];
   for (let j = 0; j < si; j++) {
     const prev = document.getElementById('step-' + j);
-    if (prev) prev.className = 'step done';
+    if (prev && !flow[j].skip) prev.className = 'step done';
   }
   const el = document.getElementById('step-' + si);
+
+  if (s.skip) {
+    inspStep(si + 1);
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (running && !paused) {
+      stepTimer = setTimeout(execStep, 120 / playbackSpeed);
+    }
+    return;
+  }
+
   el.className = 'step active';
   el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   inspStep(si + 1);
 
   if (s.mode === 'arrow') {
     if (s.f) activeNodes.add(s.f);
-    dots.push(new Dot(s.f, s.to, s.c, 0.04 * playbackSpeed * (s.speed || 1), () => {
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
       lines.push(stepLine(s));
       if (s.glow) glowing.add(s.glow);
       activeNodes.add(s.to);
@@ -1381,9 +2551,7 @@ function execStep() {
       currentStepDone = si + 1;
       saveSnapshot(si);
       runStepIndex++;
-      if (stepOnceMode) {
-        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
-      } else if (running && !paused) {
+      if (running && !paused) {
         stepTimer = setTimeout(execStep, 300 / playbackSpeed);
       }
     }, stepOpts(s)));
@@ -1402,9 +2570,7 @@ function execStep() {
     currentStepDone = si + 1;
     saveSnapshot(si);
     runStepIndex++;
-    if (stepOnceMode) {
-      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
-    } else if (running && !paused) {
+    if (running && !paused) {
       stepTimer = setTimeout(execStep, 800 / playbackSpeed);
     }
   }
@@ -1436,6 +2602,7 @@ function simulateUpTo(targetStep) {
   activeNodes.clear(); badges = {}; lines = []; glowing.clear();
   for (let i = 0; i <= targetStep; i++) {
     const s = flow[i];
+    if (s.skip) { saveSnapshot(i); continue; }
     if (s.mode === 'arrow') {
       if (s.f) activeNodes.add(s.f);
       lines.push(stepLine(s));
@@ -1461,18 +2628,17 @@ function jumpToStep(targetStep) {
     running = false;
     if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
   }
-  // Reset errColor state before simulating
-  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
   if (!snapshots[targetStep]) simulateUpTo(targetStep);
   restoreSnapshot(targetStep);
   currentStepDone = targetStep + 1;
   runStepIndex = targetStep + 1;
   document.querySelectorAll('.step').forEach((el, i) => {
+    if (flow[i] && flow[i].skip) { el.className = 'step skipped'; return; }
     if (i <= targetStep) el.className = 'step done';
     else el.className = 'step pending';
   });
   const clickedEl = document.getElementById('step-' + targetStep);
-  if (clickedEl) clickedEl.className = 'step active';
+  if (clickedEl && !(flow[targetStep] && flow[targetStep].skip)) clickedEl.className = 'step active';
   initInspector();
   for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
   dots = [];
@@ -1502,7 +2668,7 @@ function doReset() {
   inspCycle = [];
   initSteps();
   updatePlayBtn();
-  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the pipeline flow</div>';
+  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the request flow</div>';
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   draw();
 }
@@ -1519,8 +2685,8 @@ initSteps();
 updateTitle();
 draw();
 
-// Auto-start play (no loop)
-setTimeout(function() { run(); }, 500);
+// Auto-start loop mode on page load
+setTimeout(() => { toggleLoop(); }, 500);
 
 // Mobile splash animation
 (function(){
@@ -1539,21 +2705,23 @@ setTimeout(function() { run(); }, 500);
   mResize();
   const boxes=[
     {x:.15,y:.12,label:'Client',color:'#58a6ff'},
-    {x:.5,y:.08,label:'Auth',color:'#58a6ff'},
-    {x:.85,y:.12,label:'Hydrate',color:'#d2a8ff'},
-    {x:.15,y:.35,label:'Inference',color:'#3fb950'},
-    {x:.5,y:.32,label:'GP',color:'#f0883e'},
-    {x:.85,y:.35,label:'Guardrails',color:'#f0883e'},
-    {x:.2,y:.7,label:'Tool Invoke',color:'#e3b341'},
-    {x:.5,y:.75,label:'Assemble',color:'#e3b341'},
-    {x:.8,y:.7,label:'Dehydrate',color:'#8b949e'},
+    {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
+    {x:.85,y:.12,label:'Auth',color:'#f0883e'},
+    {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
+    {x:.5,y:.32,label:'Anthropic',color:'#3fb950'},
+    {x:.85,y:.35,label:'OpenAI',color:'#3fb950'},
+    {x:.2,y:.7,label:'EPP',color:'#79c0ff'},
+    {x:.5,y:.75,label:'vLLM',color:'#d2a8ff'},
+    {x:.8,y:.7,label:'NIXL',color:'#8b949e'},
+    {x:.35,y:.92,label:'Bedrock',color:'#3fb950'},
+    {x:.65,y:.92,label:'Vertex',color:'#3fb950'},
   ];
   let particles=[];
   function spawn(){
     const fi=Math.floor(Math.random()*boxes.length);
     let ti=Math.floor(Math.random()*boxes.length);
     while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
-    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#e3b341','#f85149'];
+    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#f85149'];
     particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
       c:colors[Math.floor(Math.random()*colors.length)],
       sz:2+Math.random()*3,a:.3+Math.random()*.4});
