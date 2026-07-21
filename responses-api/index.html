@@ -226,6 +226,7 @@ const N = {
 
   praxis: { x: 155, y: 195, w: 1010, h: 497, type: 'container', label: 'Praxis pod · AI data plane · ONE filter chain (one process · one request context)', color: '#d2a8ff' },
 
+  steer:       { x: 175, y: 232, w: 340, h: 44, label: 'ext_proc steering interface', sublabel: 'headers-only · µs · attachment variant (3.6 refinement)', color: '#79c0ff', fs: 13, inner: true },
   f_ident:     { x: 560, y: 240, w: 520, h: 26, label: 'identity', sublabel: 'MaaS auth · tenant · agent', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
   f_conv:      { x: 560, y: 271, w: 520, h: 26, label: 'openai_conversations', sublabel: 'CRUD · append-back on response path', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
   f_resolve:   { x: 560, y: 302, w: 520, h: 26, label: 'openai_responses_format', sublabel: 'classify · model from body · MaaS config', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
@@ -264,6 +265,7 @@ const N = {
 const tips = {
   gw: { t:'Kubernetes Gateway (Envoy / OSSM)', d:'The front door. Terminates TLS, serves non-AI traffic, and makes exactly one AI decision per request: steer it to Praxis. Never reads a body, never processes a stream — after admission it relays bytes.', dt:[['Sees','hostname, path, headers — never the body'],['Owns','TLS · non-AI traffic · steering · byte relay'],['Granularity','route']], links:[['Praxis','https://github.com/praxis-proxy/praxis']] },
   praxis: { t:'Praxis pod · AI data plane', d:'One process, one request context, ONE filter chain. Every capability — policy, translation, conversation state, persistence, the agentic loop itself — is a filter in this ordered chain, fed by MaaS-managed configuration. Requests run down the chain; response-path work (append-back, persistence) runs back up through the same filters.', dt:[['Listener','ai-gateway → filter_chains: [responses-pipeline]'],['Invariant','one router · one config authority · loop on runtime'],['Streams','in-process — no per-chunk callout protocol']], links:[['Praxis','https://github.com/praxis-proxy/praxis'],['Demos','https://github.com/praxis-proxy/demos']] },
+  steer: { t:'ext_proc steering interface', d:'How the front door and Praxis attach (one of two working variants under 3.6 refinement). The gateway consults Praxis over a thin, headers-only ext_proc exchange — microseconds, no body — and Praxis replies "send this to me." Steer-to-self: the pod that decides is the pod that executes. The request is then dispatched to the same pod\'s native HTTP data plane (Pingora), and from that point the gateway only relays bytes — no per-message callout ever carries a stream.', dt:[['Exchange','headers-only ext_proc · request phase only'],['Invariants','steer-to-self · loop on runtime · streams as bytes'],['Variant B','ext_proc request-phase filters + agentic loop sidecar'],['Core support','Envoy-compatible ext_proc machinery in praxis filter/ext-proc']], links:[['Praxis','https://github.com/praxis-proxy/praxis']] },
   f_ident: { t:'identity', d:'Validates the MaaS API key and resolves user, tenant, and agent identity into the request context. Subrequests issued by the loop inherit this identity — re-entrant traffic cannot skip auth.', dt:[['Validates','MaaS API key / subscription'],['Context set','identity, tenant, subscription'],['Error','401 Unauthorized']] },
   f_resolve: { t:'format & model resolution', d:'Classifies the request format and resolves the logical model from the body via MaaS-managed configuration — resolution happens in-pipeline, before enforcement. Downstream filters read the classification from the shared context.', dt:[['Classifies','openai_chat · openai_responses · mode'],['Internal headers','x-praxis-ai-format · x-praxis-ai-model · x-praxis-ai-stream'],['Replaces','body-field-to-header / X-Gateway-* extraction']] },
   f_policy: { t:'policy', d:'Entitlements, quotas, and budgets enforced after resolution, so limits key on the resolved model. Maintains the session budget tree — every loop iteration draws from one enforceable budget.', dt:[['Keys on','resolved model, tenant, session'],['Budget','one policy tree across iterations and tool calls'],['Error','429 Too Many Requests']] },
@@ -1044,8 +1046,10 @@ function mkIntake(pathLabel, budgetLine, resolveCtx, fmt) {
   const rc = resolveCtx || ['provider = "anthropic"', 'targetModel = "claude-haiku-4-5-20251001"'];
   return [
     A('Client sends ' + pathLabel + ' (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
-    A('Gateway steers once → Praxis (headers only, never the body)', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true },
+    A('Gateway → ext_proc steering consult (headers only, never the body)', 'gw', 'steer', '#79c0ff', { glow: 'praxis', fromBottom: true, fromXOff: -230, toTop: true, toXOff: 60 },
       () => { hHi('Authorization'); }),
+    A('steering: "send this to me" — steer-to-self (deciding pod = executing pod)', 'steer', 'gw', '#79c0ff', { fromTop: true, fromXOff: -100, toBottom: true, toXOff: -390 }),
+    A('Gateway dispatches to the Praxis data plane — bytes relay from here', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
     L('identity: MaaS key → user · tenant · agent (request context)', 'f_ident',
       () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"', 'subscription = "ext-models-sub"']); }),
     A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -6, waypoints: [{x:1148,y:248},{x:1148,y:678}], toTop: true, toXOff: -40 }),
@@ -1105,8 +1109,10 @@ const flowInc = [
 // ── Auth Failure (401) ──
 const flowAuth = [
   A('Client sends POST /v1/chat/completions (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
-  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true },
+  A('Gateway → ext_proc steering consult (headers only)', 'gw', 'steer', '#79c0ff', { glow: 'praxis', fromBottom: true, fromXOff: -230, toTop: true, toXOff: 60 },
     () => { hHi('Authorization'); }),
+  A('steering: "send this to me" — steer-to-self', 'steer', 'gw', '#79c0ff', { fromTop: true, fromXOff: -100, toBottom: true, toXOff: -390 }),
+  A('Gateway dispatches to the Praxis data plane', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
   L('identity: validate MaaS key', 'f_ident'),
   A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -6, waypoints: [{x:1148,y:248},{x:1148,y:678}], toTop: true, toXOff: -40 }),
   A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:678},{x:1185,y:261}], toRight: true, yOff: 8 },
@@ -1191,7 +1197,9 @@ const flowRespSimple = [
 // ── Flow: RAG + Conversation (conversation field · rehydrate · append-back) ──
 const flowRespRag = [
   A('Client sends POST /v1/responses (conversation: conv_123)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
-  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true }),
+  A('Gateway → ext_proc steering consult (headers only)', 'gw', 'steer', '#79c0ff', { glow: 'praxis', fromBottom: true, fromXOff: -230, toTop: true, toXOff: 60 }),
+  A('steering: "send this to me" — steer-to-self', 'steer', 'gw', '#79c0ff', { fromTop: true, fromXOff: -100, toBottom: true, toXOff: -390 }),
+  A('Gateway dispatches to the Praxis data plane', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
   L('identity: MaaS key → context', 'f_ident',
     () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"']); }),
   L('openai_conversations: conversation field present → has_conversation=true', 'f_conv',
@@ -1317,7 +1325,7 @@ const flowRespFull = [
     () => { bHi('"usage"'); }),
   A('Turn 2: "What is my name?" + previous_response_id=resp_7f3a', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: 14 },
     () => { setInspPhase('request'); inspHeaders = [{v:'POST /v1/responses',s:'keep',id:'h-path'},{v:'Authorization: Bearer sk-oai-abc123...',s:'keep',id:'h-auth'}]; bSet(['"model": "claude-haiku-4-5-20251001"', '"input": "What is my name and what do I like?"', '"previous_response_id": "resp_7f3a"']); inspCycle = []; }),
-  A('Gateway steers → Praxis', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
+  A('Gateway: steering consult → dispatch to Praxis (as turn 1)', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
   L('identity · format · policy: same session, same budget tree', 'f_policy',
     () => { cSet(['identity = "cluster-admin"', 'budget tree: continues']); }),
   L('openai_responses_validate: turn 2 IDs', 'f_validate'),
