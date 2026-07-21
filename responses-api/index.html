@@ -580,7 +580,7 @@ function drawBounds() {
   ctx.font = `italic ${ts(12)}px system-ui`;
   ctx.fillStyle = c.dim;
   ctx.textAlign = 'left';
-  ctx.fillText("terminal: they serve, they don't route", tx(680), ty(742));
+  ctx.fillText("terminal: they serve, they don't route", tx(925), ty(795));
   ctx.restore();
 
   // InferencePool boundary
@@ -1101,17 +1101,18 @@ const wpEgressBack = [{x: 725, y: 737}, {x: 725, y: 413}];
 const wpAlToGw = [{x: 165, y: 561}, {x: 165, y: 185}, {x: 500, y: 185}];
 
 // shared intake: front door + identity + resolution + policy
-function mkIntake(pathLabel, budgetLine) {
+function mkIntake(pathLabel, budgetLine, resolveCtx) {
+  const rc = resolveCtx || ['provider = "anthropic"', 'targetModel = "claude-haiku-4-5-20251001"'];
   return [
     A('Client sends ' + pathLabel + ' (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
     A('Gateway steers once → Praxis (headers only, never the body)', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
       () => { hHi('Authorization'); }),
     L('identity: MaaS key → user · tenant · agent (request context)', 'f_ident',
       () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"', 'subscription = "ext-models-sub"']); }),
-    A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, waypoints: [{x:1155,y:287},{x:1155,y:660}], toTop: true, toXOff: 60 }),
-    A('MaaS → identity (key valid)', 'maas', 'f_ident', '#f0883e', { fromTop: true, fromXOff: 100, waypoints: [{x:1178,y:660},{x:1178,y:297}], toRight: true, yOff: 10 }),
+    A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -8, waypoints: [{x:1148,y:279},{x:1148,y:668}], toTop: true, toXOff: -40 }),
+    A('MaaS → identity (key valid)', 'maas', 'f_ident', '#f0883e', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:668},{x:1185,y:299}], toRight: true, yOff: 12 }),
     L('model resolution: "model" from body via MaaS-managed config', 'f_resolve',
-      () => { bHi('"model"'); cPush('provider = "anthropic"'); cPush('targetModel = "claude-haiku-4-5-20251001"'); }),
+      () => { bHi('"model"'); rc.forEach(cPush); }),
     L('policy: entitlements · quota admit (keys on resolved model)', 'f_policy',
       () => { cPush(budgetLine); }),
   ];
@@ -1141,13 +1142,13 @@ const flowExt = [
 
 // ── Chat Completions: Internal Model (llm-d) ──
 const flowInc = [
-  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}').map(s => s), 
+  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}', ['type = "inferencepool"', 'pool = "vllm-llama3-pool"']),
   L('guardrails: request check', 'f_guard'),
   L('routing: on-cluster → placement consult', 'f_route'),
-  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:715,y:539},{x:715,y:685}], toTop: true, toXOff: -40 }),
+  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:715,y:539},{x:715,y:686},{x:302,y:686}], toTop: true }),
   L('EPP: KV-cache-aware P/D pod selection', 'sched',
     () => { cPush('pods = {prefill: pod-b, decode: pod-a}'); }),
-  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 70, waypoints: [{x:727,y:695},{x:727,y:549}], toLeft: true, yOff: 10 }),
+  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 60, waypoints: [{x:362,y:693},{x:727,y:693},{x:727,y:549}], toLeft: true, yOff: 10 }),
   A('Praxis → Sidecar (route to selected pod)', 'f_route', 'sidecar', '#58a6ff', { fromBottom: true, fromXOff: -100, waypoints: [{x:835,y:845}], toTop: true, toXOff: 20 }),
   L('Sidecar coordinates P/D transaction', 'sidecar'),
   A('Sidecar → Prefill Pod B', 'sidecar', 'prefill', '#58a6ff', { fromRight: true, toLeft: true }),
@@ -1171,8 +1172,8 @@ const flowAuth = [
   A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
     () => { hHi('Authorization'); }),
   L('identity: validate MaaS key', 'f_ident'),
-  A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, waypoints: [{x:1155,y:287},{x:1155,y:660}], toTop: true, toXOff: 60 }),
-  A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 100, waypoints: [{x:1178,y:660},{x:1178,y:297}], toRight: true, yOff: 10 },
+  A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -8, waypoints: [{x:1148,y:279},{x:1148,y:668}], toTop: true, toXOff: -40 }),
+  A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:668},{x:1185,y:299}], toRight: true, yOff: 12 },
     () => { hCut('Authorization'); bSet(['"valid": false', '"error": "invalid_api_key"']); }),
   L('identity REJECTS — pipeline stops before any capability', 'f_ident',
     () => { errResp('HTTP/1.1 401 Unauthorized', ['"error": "invalid_api_key"', '"message": "API key is not valid"']); },
@@ -1198,7 +1199,7 @@ function mkRespIntake() {
   return [
     ...mkIntake('POST /v1/responses', 'budget tree = {session root: 200k}'),
     L('routing: Responses API → agentic loop (in-process)', 'f_route'),
-    A('pipeline → Agentic Loop', 'f_route', 'al_validator', '#d2a8ff', { glow: 'al', fromLeft: true, toRight: true }),
+    A('pipeline → Agentic Loop', 'f_route', 'al_validator', '#d2a8ff', { glow: 'al', fromLeft: true, waypoints: [{x:722,y:539},{x:722,y:281}], toRight: true }),
   ];
 }
 
