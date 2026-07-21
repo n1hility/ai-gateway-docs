@@ -153,7 +153,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
         <option value="resp_rag">RAG + Conversation</option>
         <option value="resp_mcp">MCP Agent Loop</option>
         <option value="resp_bg">Background Processing</option>
-        <option value="resp_full">Full Advanced</option>
+        <option value="resp_full">Multi-Turn (prev_response_id)</option>
       </optgroup>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
@@ -224,38 +224,27 @@ const N = {
 
   gw: { x: 155, y: 108, w: 1010, h: 58, label: 'Kubernetes Gateway', sublabel: '(Envoy / OSSM) · TLS · steer AI traffic once · then relay bytes', color: '#58a6ff', fs: 18 },
 
-  praxis: { x: 155, y: 195, w: 1010, h: 470, type: 'container', label: 'Praxis pod · AI data plane (one process · one request context)', color: '#d2a8ff' },
+  praxis: { x: 155, y: 195, w: 1010, h: 497, type: 'container', label: 'Praxis pod · AI data plane · ONE filter chain (one process · one request context)', color: '#d2a8ff' },
 
-  // Filter pipeline — one ordered pipeline, every request and subrequest traverses it
-  fp: { x: 735, y: 228, w: 400, h: 412, type: 'container', label: 'Filter Pipeline · config: MaaS-managed', color: '#58a6ff' },
-  f_ident:   { x: 765, y: 268, w: 340, h: 38, label: 'identity', sublabel: 'MaaS auth · tenant · agent identity', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
-  f_resolve: { x: 765, y: 310, w: 340, h: 38, label: 'model resolution', sublabel: 'from body · MaaS-managed config', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  f_policy:  { x: 765, y: 352, w: 340, h: 38, label: 'policy', sublabel: 'entitlements · quotas · budget tree', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
-  f_trans:   { x: 765, y: 394, w: 340, h: 38, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  f_guard:   { x: 765, y: 436, w: 340, h: 38, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
-  f_cred:    { x: 765, y: 478, w: 340, h: 38, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  f_route:   { x: 765, y: 520, w: 340, h: 38, label: 'routing', sublabel: 'terminal targets · egress · placement', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  f_ident:     { x: 560, y: 240, w: 520, h: 28, label: 'identity', sublabel: 'MaaS auth · tenant · agent', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_conv:      { x: 560, y: 273, w: 520, h: 28, label: 'openai_conversations', sublabel: 'CRUD · append-back on response path', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_resolve:   { x: 560, y: 306, w: 520, h: 28, label: 'openai_responses_format', sublabel: 'classify · model from body · MaaS config', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_policy:    { x: 560, y: 339, w: 520, h: 28, label: 'policy', sublabel: 'entitlements · quotas · budget tree', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_validate:  { x: 560, y: 372, w: 520, h: 28, label: 'openai_responses_validate · tool_parse', sublabel: 'param combos · IDs · tools → has_tools facts', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_store:     { x: 560, y: 405, w: 520, h: 28, label: 'openai_response_store · stream_events', sublabel: 'persist (non-streaming) · SSE accumulation', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_rehydrate: { x: 560, y: 438, w: 520, h: 28, label: 'openai_responses_rehydrate', sublabel: 'previous_response_id / conversation → history', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_fileres:   { x: 560, y: 471, w: 520, h: 28, label: 'openai_file_resolve · mcp_tool_resolve', sublabel: 'file_id → file_data · MCP tools/list → tool map', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_loop:      { x: 560, y: 504, w: 520, h: 32, label: 'openai_responses_proxy · agentic loop', sublabel: 'rebuild body · iterations · tool dispatch → subrequests', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  f_trans:     { x: 560, y: 543, w: 520, h: 28, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_guard:     { x: 560, y: 576, w: 520, h: 28, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_cred:      { x: 560, y: 609, w: 520, h: 28, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_route:     { x: 560, y: 642, w: 520, h: 28, label: 'router · load_balancer', sublabel: 'path + format headers → cluster · terminal targets', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
 
-  // Agentic loop — loops and fan-out are pipeline primitives
-  al: { x: 175, y: 228, w: 530, h: 412, type: 'container', label: 'Agentic Loop · every iteration re-enters the pipeline', color: '#d2a8ff' },
-  al_validator:    { x: 195, y: 268, w: 490, h: 26, label: 'request-validator', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_conv_mgr:     { x: 195, y: 296, w: 490, h: 26, label: 'conversation-manager', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_tool_reg:     { x: 195, y: 324, w: 490, h: 26, label: 'tool-registry', sublabel: '(MCP discovery)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_subreq:       { x: 195, y: 366, w: 490, h: 26, label: 'pipeline subrequest', sublabel: '(iteration · tool call · fan-out candidate)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
-  al_tool_handler: { x: 195, y: 394, w: 490, h: 26, label: 'tool-call-handler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_loop_ctrl:    { x: 195, y: 422, w: 490, h: 26, label: 'loop-controller', sublabel: '(one budget tree)', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_srv_exec:     { x: 195, y: 450, w: 490, h: 26, label: 'server-tool-executor', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_mcp_exec:     { x: 195, y: 478, w: 490, h: 26, label: 'mcp-executor', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
-  al_assembler:    { x: 195, y: 520, w: 490, h: 26, label: 'response-assembler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_store:        { x: 195, y: 548, w: 490, h: 26, label: 'response-store', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  epp: { x: 175, y: 706, w: 255, h: 78, type: 'container', label: 'llm-d EPP · placement layer', color: '#79c0ff' },
+  sched: { x: 195, y: 730, w: 215, h: 44, label: 'Endpoint Picker', sublabel: 'consulted per attempt · Praxis as client', color: '#79c0ff', fs: 13, inner: true },
+  anthropic: { x: 470, y: 712, w: 180, h: 62, label: 'Anthropic', sublabel: 'external provider · direct egress', color: '#3fb950', fs: 15 },
+  maas: { x: 920, y: 712, w: 245, h: 62, label: 'MaaS', sublabel: 'definition layer · keys · quotas · models', color: '#79c0ff', fs: 15 },
 
-  // Terminal row — they serve, they don't route
-  epp: { x: 175, y: 700, w: 255, h: 78, type: 'container', label: 'llm-d EPP · placement layer', color: '#79c0ff' },
-  sched: { x: 195, y: 724, w: 215, h: 44, label: 'Endpoint Picker', sublabel: 'consulted per attempt · Praxis as client', color: '#79c0ff', fs: 13, inner: true },
-  anthropic: { x: 470, y: 706, w: 180, h: 62, label: 'Anthropic', sublabel: 'external provider · direct egress', color: '#3fb950', fs: 15 },
-  maas: { x: 920, y: 706, w: 245, h: 62, label: 'MaaS', sublabel: 'definition layer · keys · quotas · models', color: '#79c0ff', fs: 15 },
-
-  // Terminal resource services (OGX-behind-Praxis pattern) — left column
   svc_guardrails:  { x: -55, y: 420, w: 150, h: 40, label: 'NeMo Guardrails', sublabel: '(engine)', color: '#f0883e', fs: 12 },
   svc_files:       { x: -55, y: 470, w: 150, h: 40, label: 'File Service', sublabel: '(S3 / Vector Store)', color: '#3fb950', fs: 12 },
   svc_websearch:   { x: -55, y: 520, w: 150, h: 40, label: 'Web Search', color: '#3fb950', fs: 13, soon: true },
@@ -272,40 +261,35 @@ const N = {
 
 
 const tips = {
-  gw: { t:'Kubernetes Gateway (Envoy / OSSM)', d:'The front door. Terminates TLS, serves non-AI traffic, and makes exactly one AI decision per request: recognize AI traffic and steer it to Praxis. It never reads a request body and never processes a stream — after admission, it relays bytes. This role is transitional; a parallel evaluation determines when Praxis takes the gateway role.', dt:[['Sees','hostname, path, headers — never the body'],['Owns','TLS termination · non-AI traffic · steering · byte relay'],['Never','body parsing, stream processing, per-message callouts'],['Granularity','route']], links:[['Gateway API','https://gateway-api.sigs.k8s.io/'],['Praxis','https://github.com/praxis-proxy/praxis']] },
-  fp: { t:'Filter Pipeline', d:'Every capability is a filter over one request context in one ordered pipeline, fed by MaaS-managed configuration as the single source of truth. Ordering guarantees resolution precedes enforcement. Every iteration, tool call, and fan-out candidate is a subrequest through this same pipeline.', dt:[['Order','identity → resolve → policy → translate → guardrails → credentials → route'],['Context','one request context — no header smuggling between components'],['Config','MaaS-managed configuration (single authority)'],['Streams','processed in-process — no per-chunk callout protocol']], links:[['Praxis','https://github.com/praxis-proxy/praxis'],['AI filters','https://github.com/praxis-proxy/ai']] },
-  f_ident: { t:'identity', d:'Validates the MaaS API key and resolves user, tenant, and agent identity into the request context. Loop iterations inherit this identity — re-entrant traffic can no longer skip auth.', dt:[['Validates','MaaS API key / subscription'],['Context set','identity, tenant, subscription'],['Fixes','unauthenticated internal paths, header-trust smuggling'],['Error','401 Unauthorized']] },
-  f_resolve: { t:'model resolution', d:'Resolves the logical model from the request body via the MaaS-managed configuration — the unified model-in-body entry point works because resolution happens in-pipeline, before enforcement. No X-Gateway-* header extraction.', dt:[['Input','"model" field in body'],['Source','MaaS-managed configuration'],['Context set','provider, targetModel, endpoint / pool'],['Replaces','model-provider-resolver, body-field-to-header, base-model-to-header']] },
-  f_policy: { t:'policy', d:'Entitlements, quotas, and budgets enforced after resolution, so limits can key on the resolved model. Maintains the session budget tree — every loop iteration and fan-out candidate draws from one enforceable budget.', dt:[['Keys on','resolved model, tenant, session'],['Budget','one policy tree across iterations and tool calls'],['Definition layer','MaaS-defined policy (Kuadrant CRDs)'],['Error','429 Too Many Requests']] },
-  f_trans: { t:'API translation', d:'Translates between client and provider formats — request, response, and stream — inside one process. Chunk boundaries and SSE semantics survive because no per-message callout protocol carries the stream.', dt:[['Formats','OpenAI ↔ Anthropic Messages ↔ provider-native'],['Streaming','SSE-aware, in-process'],['Usage','extracts usage into the budget tree'],['Carries forward','IPP translation plugins as the filter spec']] },
-  f_guard: { t:'guardrails', d:'One guardrails filter on all paths — ingress, egress, inside streams, and inside loop iterations. Engines (NeMo, TrustyAI detectors) remain terminal services; the pipeline is where enforcement composes.', dt:[['Coverage','all paths, including in-stream and in-loop'],['Engines','NeMo Guardrails, TrustyAI detector orchestrator'],['Replaces','parallel per-path integrations']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
-  f_cred: { t:'credential injection', d:'Injects provider credentials per destination. Client credentials are never exposed; loop iterations inherit injected credentials without bypass paths.', dt:[['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex'],['Pattern','BYOK, per-destination injection, rotation'],['Source','K8s Secrets / Vault (hardening path)']] },
-  f_route: { t:'routing', d:'The single routing authority. Everything behind it is terminal: it serves, it does not route. Routes to external providers (egress), the placement layer (EPP consult), resource services, or back into the agentic loop.', dt:[['Targets','external egress · InferencePool via EPP · resources · loop'],['Invariant','one router, one config authority'],['Fallback','re-entrant, with rewritten requests (not identical replay)']] },
-  al: { t:'Agentic Loop', d:'Praxis owns the agentic loop as a pipeline primitive. Every iteration, tool call, and fan-out candidate is a subrequest through the same filter pipeline, inheriting auth, quotas, metering, and audit — the loop executes on the Praxis runtime, never inside a callout exchange.', dt:[['Invariant','loop on runtime · steer-to-self'],['Budget','nested budgets form one enforceable policy tree'],['Replaces','OGX second half-gateway · duplicate router'],['Spec','Open Responses']], links:[['Open Responses','https://github.com/openresponses/openresponses']] },
-  al_validator: { t:'request-validator', d:'Format-aware validation for Responses API input, tools, and conversation parameters. Writes validated parameters into the request context.', dt:[['Validates','model, input, tools, tool_choice, stream, background'],['Context set','request_format, validated_params, has_tools']] },
-  al_conv_mgr: { t:'conversation-manager', d:'Loads and saves conversation state from the Conversation Store — a terminal resource service. Load at intake, persist at completion.', dt:[['on_request','load conversation items + stored messages'],['on_response','save input + output items'],['Store','terminal resource (OGX-behind-Praxis pattern)']] },
-  al_tool_reg: { t:'tool-registry (MCP discovery)', d:'Resolves and registers available tools. Connects to MCP servers for discovery, applies allowed_tools filtering, stores the resolved tool map in the request context.', dt:[['Tool types','function, mcp, web_search, file_search, custom'],['Discovery','MCP list_tools, cached per session']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
-  al_subreq: { t:'pipeline subrequest', d:'The composition guarantee in action: each inference attempt is a subrequest that re-enters the filter pipeline in-process. Policy, translation, guardrails, and credentials apply to every iteration — nothing skips the pipeline, and nothing exits through the gateway.', dt:[['Re-enters','filter pipeline (in-process, steer-to-self)'],['Inherits','identity, quotas, metering, audit'],['Replaces','nested calls bouncing through Envoy/IPP with policy skipped']] },
-  al_tool_handler: { t:'tool-call-handler', d:'Detects, classifies, and routes tool calls from model output. Server-side tools fan out to executors; function tools yield to the client.', dt:[['Routing','server-side → executors · function → yield'],['Context set','tool_routing[], has_server_side_tools']] },
-  al_loop_ctrl: { t:'loop-controller', d:'Evaluates loop state against the session budget tree and signals continue or stop. Whole-session enforcement: token budgets and cost attribution cover every iteration and tool call.', dt:[['Signals','continue, stop_completed, stop_incomplete, stop_yield'],['Limits','max_tool_calls, max_output_tokens, budget tree'],['Usage','accumulated across all iterations — visible to policy']] },
-  al_srv_exec: { t:'server-tool-executor', d:'Executes internally-hosted tools via config-driven dispatch. Tool backends are terminal services.', dt:[['Tools','file_search, web_search, code_interpreter, custom'],['Dispatch','config-driven backend per tool type']] },
-  al_mcp_exec: { t:'mcp-executor', d:'Orchestrates calls to external MCP servers, reusing the discovery session. MCP tool-call traffic runs through the Praxis pipeline; supports the approval flow for per-action authorization.', dt:[['Session','reused from tool-registry discovery'],['Approval','mcp_approval_request → client review → response'],['Governance','per-action authorization on the identity spine']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
-  al_assembler: { t:'response-assembler', d:'Builds the final ResponseResource: output items, accumulated usage from the budget tree, and echo-back fields.', dt:[['Output','ResponseResource, object="response"'],['Usage','one total across all iterations and tool calls']] },
-  al_store: { t:'response-store', d:'Persists the response when store=true, retrievable via GET /v1/responses/{id} and referenceable via previous_response_id.', dt:[['Condition','store=true'],['Store','terminal resource service']] },
-  sched: { t:'llm-d EPP — Endpoint Picker', d:'The placement layer. Praxis consults the EPP per attempt over the standard full-duplex contract — Praxis is the client, not an Envoy ext_proc chain. KV-cache-aware pod selection; on failure, re-consulted with fresh context.', dt:[['Contract','standard EPP full-duplex, Praxis as client'],['Metrics','KV cache utilization, queue depth, model affinity'],['Granularity','pod'],['Unchanged','nothing forks — EPP remains the placement authority']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
-  epp: { t:'llm-d EPP · placement layer', d:'One routing authority per layer: gateway at route granularity, Praxis at request granularity, EPP at pod granularity. Each layer decides only what it can see.', dt:[['Layer','placement (pod granularity)'],['Consulted','per attempt, with fresh context on failure']], links:[['llm-d','https://github.com/llm-d']] },
-  anthropic: { t:'Anthropic', d:'External model provider — a terminal backend. Praxis egresses directly with injected provider credentials; responses stream back through the pipeline as translated bytes. External providers no longer require a bounce through the front door.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Egress','direct from Praxis, credentials injected'],['Terminal','serves requests — does not route']] },
-  maas: { t:'MaaS — definition layer', d:'MaaS defines the user-facing policy model: API keys, subscriptions, quotas, and model offerings. The pipeline consumes MaaS-managed configuration as its single source of truth — one config authority, nothing independently declared.', dt:[['Defines','keys, subscriptions, quotas, model catalog'],['Consumed by','identity, resolution, and policy filters'],['Fixes','configuration drift between duplicate authorities']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
-  svc_guardrails: { t:'NeMo Guardrails (engine)', d:'Guardrails engine — a terminal service called by the guardrails filter. The engines are the capability; the pipeline is where enforcement finally composes.', dt:[['Called by','guardrails filter (all paths)'],['Terminal','serves evaluations — does not route']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
-  svc_files: { t:'File Service (S3 / Vector Store)', d:'Terminal resource service for file_search. Real backends (S3, vector databases) sit behind Praxis with forwarded identity, tenant, and scope.', dt:[['Called by','server-tool-executor'],['Pattern','resource APIs behind Praxis (OGX split)']], links:[['Open Responses','https://github.com/openresponses/openresponses']] },
-  svc_websearch: { t:'Web Search', d:'Web search backend for the web_search tool. Terminal service; returns unsupported-tool error until configured.', dt:[['Status','Coming Soon'],['Called by','server-tool-executor']] },
-  svc_mcp: { t:'MCP Server', d:'External MCP server. Discovery and invocation both transit the Praxis pipeline on the same identity spine — per-action authorization and unified audit apply.', dt:[['Called by','tool-registry (discovery) + mcp-executor (invocation)'],['Protocol','MCP over SSE or stdio']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
-  svc_conv: { t:'Conversation Store', d:'Terminal storage for conversation state — items for UI metadata, raw messages for inference context.', dt:[['Called by','conversation-manager'],['Terminal','serves storage — does not route']] },
-  svc_resp_store: { t:'Response Store', d:'Terminal SQL persistence for response objects; supports background processing and previous_response_id continuation.', dt:[['Called by','response-store'],['Retrieval','GET /v1/responses/{id}']] },
-  sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction between the prefill and decode workers.', dt:[['Role','transaction coordinator'],['Triggers','KVXfer metadata exchange']] },
-  prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the prompt and generates the initial KV cache; returns KVXfer metadata for the decode pod to pull via NIXL.', dt:[['Engine','vLLM'],['Output','KVXfer metadata']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
-  decode: { t:'Decode Pod A (vLLM)', d:'Generates output tokens auto-regressively using KV cache pulled from prefill via NIXL. Streams tokens back to Praxis as relayed bytes.', dt:[['Engine','vLLM'],['Input','KV cache via NIXL pull']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
-  nixl: { t:'NIXL — KV Transfer', d:'High-speed KV cache transfer between prefill and decode pods over GPU-direct RDMA.', dt:[['Transport','GPU-direct RDMA, DCN'],['Direction','decode pulls from prefill']], links:[['NIXL Repo','https://github.com/ai-dynamo/nixl']] },
+  gw: { t:'Kubernetes Gateway (Envoy / OSSM)', d:'The front door. Terminates TLS, serves non-AI traffic, and makes exactly one AI decision per request: steer it to Praxis. Never reads a body, never processes a stream — after admission it relays bytes.', dt:[['Sees','hostname, path, headers — never the body'],['Owns','TLS · non-AI traffic · steering · byte relay'],['Granularity','route']], links:[['Praxis','https://github.com/praxis-proxy/praxis']] },
+  praxis: { t:'Praxis pod · AI data plane', d:'One process, one request context, ONE filter chain. Every capability — policy, translation, conversation state, persistence, the agentic loop itself — is a filter in this ordered chain, fed by MaaS-managed configuration. Requests run down the chain; response-path work (append-back, persistence) runs back up through the same filters.', dt:[['Listener','ai-gateway → filter_chains: [responses-pipeline]'],['Invariant','one router · one config authority · loop on runtime'],['Streams','in-process — no per-chunk callout protocol']], links:[['Praxis','https://github.com/praxis-proxy/praxis'],['Demos','https://github.com/praxis-proxy/demos']] },
+  f_ident: { t:'identity', d:'Validates the MaaS API key and resolves user, tenant, and agent identity into the request context. Subrequests issued by the loop inherit this identity — re-entrant traffic cannot skip auth.', dt:[['Validates','MaaS API key / subscription'],['Context set','identity, tenant, subscription'],['Error','401 Unauthorized']] },
+  f_resolve: { t:'format & model resolution', d:'Classifies the request format and resolves the logical model from the body via MaaS-managed configuration — resolution happens in-pipeline, before enforcement. Downstream filters read the classification from the shared context.', dt:[['Classifies','openai_chat · openai_responses · mode'],['Internal headers','x-praxis-ai-format · x-praxis-ai-model · x-praxis-ai-stream'],['Replaces','body-field-to-header / X-Gateway-* extraction']] },
+  f_policy: { t:'policy', d:'Entitlements, quotas, and budgets enforced after resolution, so limits key on the resolved model. Maintains the session budget tree — every loop iteration draws from one enforceable budget.', dt:[['Keys on','resolved model, tenant, session'],['Budget','one policy tree across iterations and tool calls'],['Error','429 Too Many Requests']] },
+  f_conv: { t:'openai_conversations', d:'Conversation CRUD (/v1/conversations) and automatic append-back: after a successful response, appends the user input and assistant output items back to the conversation. No client-side bookkeeping.', dt:[['Request path','CRUD · passthrough (on_invalid: continue)'],['Response path','append input+output items back'],['Backend','SQLite / SQL store'],['Log','conversation items appended count=2']], links:[['Demo','https://github.com/praxis-proxy/demos/tree/main/demos/openai-conversations-multi-turn']] },
+  f_validate: { t:'openai_responses_validate · openai_tool_parse', d:'Validates parameter combinations (stream+background, background+store), generates response/conversation IDs, and writes responses.* metadata. tool_parse promotes tools-array facts (has_tools, tool_choice, function_count) without mutating the body.', dt:[['Validates','model, input, tools, stream, background'],['Generates','response_id, conversation_id'],['Output','metadata for downstream filters']] },
+  f_store: { t:'openai_response_store · openai_stream_events', d:'Persists responses on the response path — buffers the complete JSON to extract and save the output (non-streaming required; streaming bypasses persistence). stream_events accumulates SSE events in-process for downstream consumption.', dt:[['Response path','persist · buffers full JSON'],['Streaming','bypasses persistence'],['Backend','SQLite / SQL store'],['Log','persisted response id=resp_...']], links:[['Demo','https://github.com/praxis-proxy/demos/tree/main/demos/openai-responses-multi-turn']] },
+  f_rehydrate: { t:'openai_responses_rehydrate', d:'Multi-turn memory. Resolves previous_response_id from the store (or loads conversation items), assembles the full history into ResponsesState — stored turns plus current input.', dt:[['previous_response_id','lookup in store → load stored turns'],['conversation','load conversation items → prepend'],['Precedence','previous_response_id wins over conversation'],['Log','rehydrated conversation=conv_... items=2']] },
+  f_fileres: { t:'openai_file_resolve · openai_mcp_tool_resolve', d:'Resolvers run after rehydrate so stored history is available. file_resolve swaps file_id references for inline file_data via the Files API; mcp_tool_resolve calls tools/list on upstream MCP servers and writes mcp_tool_map to ResponsesState — discovery is a filter, not loop logic.', dt:[['file_resolve','file_id → file_data / image_url via Files API'],['mcp_tool_resolve','tools/list per server → mcp_tool_map'],['Order','after rehydrate · before responses_proxy']] },
+  f_loop: { t:'openai_responses_proxy · agentic loop', d:'The loop is a filter. Rebuilds the outbound body with full history (strips conversation / previous_response_id — already resolved), owns iterations, tool dispatch, and fan-out. Every iteration is a subrequest that re-enters this same chain, inheriting identity, policy, and the budget tree.', dt:[['Rebuilds','input ← full message array · content-length updated'],['Iterations','subrequests re-enter the chain'],['Tool calls','dispatched to terminal services'],['Proof','turn 2 total_tokens > turn 1 (history prepended)']], links:[['Praxis AI filters','https://github.com/praxis-proxy/ai'],['Open Responses','https://github.com/openresponses/openresponses']] },
+  f_trans: { t:'API translation', d:'Translates between client and provider formats — request, response, and stream — inside one process. Chunk boundaries and SSE semantics survive because no callout protocol carries the stream.', dt:[['Formats','OpenAI ↔ Anthropic Messages ↔ provider-native'],['Streaming','SSE-aware, in-process'],['Usage','extracted into the budget tree']] },
+  f_guard: { t:'guardrails', d:'One guardrails filter on all paths — ingress, egress, in-stream, and inside loop iterations. Engines remain terminal services; the pipeline is where enforcement composes.', dt:[['Coverage','all paths, including in-stream and in-loop'],['Engines','NeMo Guardrails, TrustyAI detectors']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  f_cred: { t:'credential injection', d:'Injects provider credentials per destination. Client credentials are never exposed; subrequests inherit injected credentials without bypass paths.', dt:[['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex'],['Pattern','BYOK · per-destination injection · rotation']] },
+  f_route: { t:'router · load_balancer', d:'The single routing authority at request granularity. Routes on path + classification headers to clusters; everything behind it is terminal — it serves, it does not route.', dt:[['Routes on','path · x-praxis-ai-format · resolved model'],['Targets','external egress · InferencePool via EPP · resources'],['Fallback','re-entrant with rewritten requests']] },
+  sched: { t:'llm-d EPP — Endpoint Picker', d:'The placement layer. Praxis consults the EPP per attempt over the standard full-duplex contract — Praxis is the client, not an Envoy ext_proc chain. KV-cache-aware pod selection.', dt:[['Contract','standard EPP full-duplex, Praxis as client'],['Metrics','KV cache utilization, queue depth, affinity'],['Granularity','pod']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
+  epp: { t:'llm-d EPP · placement layer', d:'One routing authority per layer: gateway at route granularity, Praxis at request granularity, EPP at pod granularity.', dt:[['Layer','placement (pod granularity)'],['Consulted','per attempt, fresh context on failure']] },
+  anthropic: { t:'Anthropic', d:'External model provider — a terminal backend. Praxis egresses directly with injected credentials; responses stream back through the chain as translated bytes.', dt:[['API','/v1/messages'],['Egress','direct from Praxis, credentials injected'],['Terminal','serves — does not route']] },
+  maas: { t:'MaaS — definition layer', d:'Defines the user-facing policy model: keys, subscriptions, quotas, model offerings. The chain consumes MaaS-managed configuration as its single source of truth.', dt:[['Defines','keys, subscriptions, quotas, model catalog'],['Consumed by','identity, resolution, policy filters']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
+  svc_guardrails: { t:'NeMo Guardrails (engine)', d:'Guardrails engine — terminal service called by the guardrails filter.', dt:[['Called by','guardrails filter (all paths)'],['Terminal','serves evaluations — does not route']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  svc_files: { t:'File Service (S3 / Vector Store)', d:'Terminal resource service for file_search, dispatched by responses_proxy tool execution.', dt:[['Called by','responses_proxy (tool dispatch)'],['Pattern','resource APIs behind Praxis']] },
+  svc_websearch: { t:'Web Search', d:'Web search backend for the web_search tool. Terminal service.', dt:[['Status','Coming Soon']] },
+  svc_mcp: { t:'MCP Server', d:'External MCP server. Discovery and invocation dispatched by responses_proxy on the same identity spine — per-action authorization and unified audit apply.', dt:[['Called by','responses_proxy (discovery + invocation)'],['Protocol','MCP over SSE or stdio']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  svc_conv: { t:'Conversation Store', d:'Terminal storage for conversation items — loaded by rehydrate, appended by openai_conversations on the response path.', dt:[['Read','rehydrate (load items)'],['Write','openai_conversations (append-back)'],['Backend','SQLite / SQL']] },
+  svc_resp_store: { t:'Response Store', d:'Terminal SQL persistence for response objects — written by openai_response_store, read by rehydrate for previous_response_id.', dt:[['Write','openai_response_store'],['Read','rehydrate (previous_response_id)'],['Retrieval','GET /v1/responses/{id}']] },
+  sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction between prefill and decode workers.', dt:[['Role','transaction coordinator']] },
+  prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the prompt, generates the initial KV cache, returns KVXfer metadata.', dt:[['Engine','vLLM']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
+  decode: { t:'Decode Pod A (vLLM)', d:'Generates output tokens using KV cache pulled from prefill via NIXL; streams tokens back to Praxis.', dt:[['Engine','vLLM']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
+  nixl: { t:'NIXL — KV Transfer', d:'High-speed KV cache transfer between prefill and decode pods over GPU-direct RDMA.', dt:[['Transport','GPU-direct RDMA, DCN']], links:[['NIXL Repo','https://github.com/ai-dynamo/nixl']] },
 };
 
 
@@ -499,7 +483,6 @@ function drawContainer(key, isGlow) {
 
 function drawBounds() {
   const c = C();
-  // Cluster boundary
   const cb = N.cluster;
   ctx.beginPath();
   ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
@@ -513,74 +496,48 @@ function drawBounds() {
   ctx.textAlign = 'right';
   ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
 
-  // Praxis pod, pipeline, loop, EPP containers
   drawContainer('praxis', glowing.has('praxis'));
-  drawContainer('fp', glowing.has('fp'));
-  drawContainer('al', glowing.has('al'));
   drawContainer('epp', glowing.has('epp'));
 
-  // Agentic Loop plugin sections
-  if (N.al) {
-    ctx.save();
-    // Intake section
-    ctx.beginPath();
-    ctx.roundRect(tx(183), ty(252), ts(515), ts(103), ts(8));
-    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = `bold ${ts(10)}px system-ui`;
-    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
-    ctx.textAlign = 'left';
-    ctx.fillText('Intake →', tx(195), ty(262));
-
-    // Loop section
-    ctx.beginPath();
-    ctx.roundRect(tx(183), ty(358), ts(515), ts(150), ts(8));
-    ctx.fillStyle = isDark ? '#d2a8ff06' : '#d2a8ff05';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#d2a8ff25' : '#d2a8ff20';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = `bold ${ts(10)}px system-ui`;
-    ctx.fillStyle = isDark ? '#d2a8ff88' : '#d2a8ff99';
-    ctx.fillText('⟳ Loop — subrequests re-enter the pipeline', tx(195), ty(361));
-
-    // Completion section
-    ctx.beginPath();
-    ctx.roundRect(tx(183), ty(511), ts(515), ts(70), ts(8));
-    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = `bold ${ts(10)}px system-ui`;
-    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
-    ctx.fillText('← Completion', tx(195), ty(514));
-    ctx.restore();
-  }
-
-  // Pipeline order hint
+  // Chain group shades: identity/policy · responses (loop is a filter too) · egress
+  const groups = [
+    { y: 234, h: 137, color: '#f0883e', label: 'admission →' },
+    { y: 366, h: 176, color: '#d2a8ff', label: 'Responses state & loop — all filters →' },
+    { y: 537, h: 137, color: '#58a6ff', label: 'translation & egress →' },
+  ];
   ctx.save();
+  groups.forEach(g => {
+    ctx.beginPath();
+    ctx.roundRect(tx(548), ty(g.y), ts(544), ts(g.h), ts(8));
+    ctx.fillStyle = g.color + (isDark ? '08' : '06');
+    ctx.fill();
+    ctx.strokeStyle = g.color + (isDark ? '28' : '22');
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(11)}px system-ui`;
+    ctx.fillStyle = g.color + (isDark ? '99' : 'aa');
+    ctx.textAlign = 'right';
+    ctx.fillText(g.label, tx(500), ty(g.y + g.h / 2));
+  });
+  // Re-entry annotation in the left space
+  ctx.font = `italic ${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? '#d2a8ffaa' : '#8250dfaa';
+  ctx.textAlign = 'left';
+  ctx.fillText('⟳ every iteration, tool call, and fan-out candidate', tx(185), ty(645));
+  ctx.fillText('   is a subrequest that re-enters this same chain', tx(185), ty(663));
   ctx.font = `bold ${ts(10)}px system-ui`;
   ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
-  ctx.textAlign = 'left';
-  ctx.fillText('one ordered pipeline ↓ · streams pass back through ↑', tx(765), ty(258));
+  ctx.fillText('request path ↓ · response path ↑ (append-back · persist)', tx(560), ty(228));
   ctx.restore();
 
-  // Terminal row caption
+  // Terminal caption
   ctx.save();
   ctx.font = `italic ${ts(12)}px system-ui`;
   ctx.fillStyle = c.dim;
   ctx.textAlign = 'left';
-  ctx.fillText("terminal: they serve, they don't route", tx(925), ty(795));
+  ctx.fillText("terminal: they serve, they don't route", tx(925), ty(800));
   ctx.restore();
 
   // InferencePool boundary
@@ -597,7 +554,7 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
 
-  // Decode Pod A sub-boundary (left, under sidecar)
+  // P/D pod decorations
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(tx(235), ty(933), ts(230), ts(82), ts(8));
@@ -606,21 +563,14 @@ function drawBounds() {
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-
-  // Stacked vLLM pods behind decode (decorative)
   const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
     ctx.roundRect(tx(250 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
-    ctx.fillStyle = podC;
-    ctx.strokeStyle = podS;
-    ctx.lineWidth = ts(1);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke();
   }
-
-  // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
   ctx.roundRect(tx(845), ty(933), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
@@ -628,21 +578,14 @@ function drawBounds() {
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-
-  // Stacked vLLM pods behind prefill (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
     ctx.roundRect(tx(860 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
-    ctx.fillStyle = podC;
-    ctx.strokeStyle = podS;
-    ctx.lineWidth = ts(1);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke();
   }
   ctx.restore();
 }
-
-
 function edgePt(n, targetX, targetY, yOff) {
   const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
   const dx = targetX - cx_, dy = targetY - cy_;
@@ -989,7 +932,7 @@ function initInspector() {
         { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
         { v: '"input": "What do docs say about Q4?"', s: 'keep', id: 'b-input' },
         { v: '"tools": [{"type":"file_search","vector_store_ids":[...]}]', s: 'keep', id: 'b-tools' },
-        { v: '"conversation": "my-session-001"', s: 'keep', id: 'b-conv' },
+        { v: '"conversation": "conv_123"', s: 'keep', id: 'b-conv' },
       ];
     } else if (activeFlow === 'resp_mcp') {
       inspBody = [
@@ -1008,11 +951,8 @@ function initInspector() {
     } else if (activeFlow === 'resp_full') {
       inspBody = [
         { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
-        { v: '"input": "What do docs say about Q4?"', s: 'keep', id: 'b-input' },
-        { v: '"tools": [file_search, mcp, function]', s: 'keep', id: 'b-tools' },
-        { v: '"conversation": "my-session-001"', s: 'keep', id: 'b-conv' },
-        { v: '"stream": true', s: 'keep', id: 'b-stream' },
-        { v: '"guardrail_ids": ["content-safety"]', s: 'keep', id: 'b-guard' },
+        { v: '"input": "My name is Seb and I like reverse proxies."', s: 'keep', id: 'b-input' },
+        { v: '"store": true (OpenAI spec default)', s: 'keep', id: 'b-store' },
       ];
     }
   } else {
@@ -1091,65 +1031,61 @@ function inspStep(stepNum) {
 // ================================================================
 let activeFlow = 'ext';
 
-// step makers
 const A = (t, f, to, c, o, insp) => Object.assign({ t, mode: 'arrow', f, to, c }, o || {}, insp ? { insp } : {});
 const L = (t, target, insp, o) => Object.assign({ t, mode: 'lightup', target }, o || {}, insp ? { insp } : {});
 
-// shared waypoint channels (gap between loop and pipeline at x≈705–735)
-const wpEgressOut = [{x: 715, y: 539}, {x: 715, y: 690}];
-const wpEgressBack = [{x: 725, y: 737}, {x: 725, y: 413}];
-const wpAlToGw = [{x: 165, y: 561}, {x: 165, y: 185}, {x: 500, y: 185}];
+// waypoint channels
+const wpArc = [{x: 518, y: 520}, {x: 518, y: 254}];               // subrequest re-entry (loop -> top of chain)
+const wpOut = [{x: 528, y: 557}, {x: 528, y: 526}];               // translation -> loop
+const wpProvBack = [{x: 508, y: 698}, {x: 508, y: 557}];          // provider -> translation
 
-// shared intake: front door + identity + resolution + policy
-function mkIntake(pathLabel, budgetLine, resolveCtx) {
+function mkIntake(pathLabel, budgetLine, resolveCtx, fmt) {
   const rc = resolveCtx || ['provider = "anthropic"', 'targetModel = "claude-haiku-4-5-20251001"'];
   return [
     A('Client sends ' + pathLabel + ' (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
-    A('Gateway steers once → Praxis (headers only, never the body)', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
+    A('Gateway steers once → Praxis (headers only, never the body)', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true },
       () => { hHi('Authorization'); }),
     L('identity: MaaS key → user · tenant · agent (request context)', 'f_ident',
       () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"', 'subscription = "ext-models-sub"']); }),
-    A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -8, waypoints: [{x:1148,y:279},{x:1148,y:668}], toTop: true, toXOff: -40 }),
-    A('MaaS → identity (key valid)', 'maas', 'f_ident', '#f0883e', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:668},{x:1185,y:299}], toRight: true, yOff: 12 }),
-    L('model resolution: "model" from body via MaaS-managed config', 'f_resolve',
-      () => { bHi('"model"'); rc.forEach(cPush); }),
+    A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -6, waypoints: [{x:1148,y:248},{x:1148,y:678}], toTop: true, toXOff: -40 }),
+    A('MaaS → identity (key valid)', 'maas', 'f_ident', '#f0883e', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:678},{x:1185,y:261}], toRight: true, yOff: 8 }),
+    L('openai_responses_format: classified format=' + fmt + ' · model from body', 'f_resolve',
+      () => { bHi('"model"'); hPush('x-praxis-ai-format: ' + fmt); rc.forEach(cPush); }),
     L('policy: entitlements · quota admit (keys on resolved model)', 'f_policy',
       () => { cPush(budgetLine); }),
   ];
 }
 
-// ── Chat Completions: External Model (Anthropic) ──
+// ── Chat Completions: External Model ──
 const flowExt = [
-  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}'),
+  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}', null, 'openai_chat'),
   L('API translation: OpenAI → Anthropic Messages', 'f_trans',
     () => { hCut('POST /v1/chat'); hPush('POST /v1/messages'); hPush('anthropic-version: 2023-06-01'); }),
   L('guardrails: request check (uniform, all paths)', 'f_guard'),
-  L('credential injection: provider key (client key never forwarded)', 'f_cred',
+  L('credential injection (client key never forwarded)', 'f_cred',
     () => { hCut('Authorization'); hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
-  L('routing: external egress → Anthropic (terminal)', 'f_route'),
-  A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromLeft: true, waypoints: wpEgressOut, toTop: true, toXOff: 30 }),
-  A('Anthropic responds (stream)', 'anthropic', 'f_trans', '#3fb950', { fromRight: true, waypoints: wpEgressBack, toLeft: true, yOff: -6 },
+  L('router: external egress → Anthropic (terminal)', 'f_route'),
+  A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromBottom: true, fromXOff: -180, toTop: true, toXOff: 30 }),
+  A('Anthropic responds (stream)', 'anthropic', 'f_trans', '#3fb950', { fromTop: true, fromXOff: -40, waypoints: wpProvBack, toLeft: true },
     () => { respOK(); bSet(['"type": "message"', '"content": [{"type":"text","text":"Hello!"}]', '"stop_reason": "end_turn"', '"usage": {"input_tokens":8,"output_tokens":2}']); inspCycle = []; }),
   L('translation: Anthropic → OpenAI (SSE-aware, in-process)', 'f_trans',
     () => { bCut('"type"'); bPush('"object": "chat.completion"'); bCut('"content"'); bPush('"choices": [{"message":{"content":"Hello!"}}]'); bCut('"stop_reason"'); bPush('"finish_reason": "stop"'); }),
   L('guardrails: response check (in-stream)', 'f_guard'),
-  L('policy: usage → budget tree (in-process, no callback)', 'f_policy',
-    () => { bHi('"usage"'); }),
-  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  L('policy: usage → budget tree (in-process, no callback)', 'f_policy', () => { bHi('"usage"'); }),
+  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
   A('Response to client (OpenAI format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
-    () => { bHi('"object"'); bHi('"choices"'); }),
+    () => { bHi('"choices"'); }),
 ];
 
 // ── Chat Completions: Internal Model (llm-d) ──
 const flowInc = [
-  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}', ['type = "inferencepool"', 'pool = "vllm-llama3-pool"']),
+  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}', ['type = "inferencepool"', 'pool = "vllm-llama3-pool"'], 'openai_chat'),
   L('guardrails: request check', 'f_guard'),
-  L('routing: on-cluster → placement consult', 'f_route'),
-  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:715,y:539},{x:715,y:686},{x:302,y:686}], toTop: true }),
-  L('EPP: KV-cache-aware P/D pod selection', 'sched',
-    () => { cPush('pods = {prefill: pod-b, decode: pod-a}'); }),
-  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 60, waypoints: [{x:362,y:693},{x:727,y:693},{x:727,y:549}], toLeft: true, yOff: 10 }),
-  A('Praxis → Sidecar (route to selected pod)', 'f_route', 'sidecar', '#58a6ff', { fromBottom: true, fromXOff: -100, waypoints: [{x:835,y:845}], toTop: true, toXOff: 20 }),
+  L('router: on-cluster → placement consult', 'f_route'),
+  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:532,y:656},{x:532,y:694},{x:302,y:694}], toTop: true }),
+  L('EPP: KV-cache-aware P/D pod selection', 'sched', () => { cPush('pods = {prefill: pod-b, decode: pod-a}'); }),
+  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 60, waypoints: [{x:362,y:700},{x:542,y:700},{x:542,y:666}], toLeft: true, yOff: 10 }),
+  A('Praxis → Sidecar (route to selected pod)', 'f_route', 'sidecar', '#58a6ff', { fromBottom: true, fromXOff: 60, waypoints: [{x:880,y:854}], toTop: true, toXOff: 20 }),
   L('Sidecar coordinates P/D transaction', 'sidecar'),
   A('Sidecar → Prefill Pod B', 'sidecar', 'prefill', '#58a6ff', { fromRight: true, toLeft: true }),
   L('Prefill processing (KV cache built)', 'prefill'),
@@ -1157,275 +1093,246 @@ const flowInc = [
   A('Sidecar → Decode Pod A', 'sidecar', 'decode', '#58a6ff', { fromLeft: true, toTop: true, toXOff: -60 }),
   A('Decode pulls KVs via NIXL', 'decode', 'nixl', '#8b949e', { fromRight: true, toLeft: true, yOff: -8 }),
   A('NIXL returns KV cache (RDMA)', 'nixl', 'decode', '#8b949e', { fromLeft: true, toRight: true, yOff: 8 }),
-  A('Decode streams tokens → Praxis', 'decode', 'f_trans', '#3fb950', { fromTop: true, fromXOff: 50, waypoints: [{x:400,y:848},{x:725,y:848},{x:725,y:413}], toLeft: true, yOff: -6 },
+  A('Decode streams tokens → Praxis', 'decode', 'f_trans', '#3fb950', { fromTop: true, waypoints: [{x:350,y:858},{x:165,y:858},{x:165,y:557}], toLeft: true },
     () => { respOK(); bSet(['"object": "chat.completion"', '"choices": [{"message":{"content":"Hello!"}}]', '"finish_reason": "stop"', '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}']); inspCycle = []; }),
   L('guardrails: response check (in-stream)', 'f_guard'),
   L('policy: usage → budget tree', 'f_policy', () => { bHi('"usage"'); }),
-  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
-  A('Response to client (OpenAI format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
-    () => { bHi('"choices"'); }),
+  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
+  A('Response to client (OpenAI format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 }, () => { bHi('"choices"'); }),
 ];
 
 // ── Auth Failure (401) ──
 const flowAuth = [
   A('Client sends POST /v1/chat/completions (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
-  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
+  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true },
     () => { hHi('Authorization'); }),
   L('identity: validate MaaS key', 'f_ident'),
-  A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -8, waypoints: [{x:1148,y:279},{x:1148,y:668}], toTop: true, toXOff: -40 }),
-  A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:668},{x:1185,y:299}], toRight: true, yOff: 12 },
+  A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, yOff: -6, waypoints: [{x:1148,y:248},{x:1148,y:678}], toTop: true, toXOff: -40 }),
+  A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 80, waypoints: [{x:1185,y:678},{x:1185,y:261}], toRight: true, yOff: 8 },
     () => { hCut('Authorization'); bSet(['"valid": false', '"error": "invalid_api_key"']); }),
-  L('identity REJECTS — pipeline stops before any capability', 'f_ident',
+  L('identity REJECTS — chain stops before any capability', 'f_ident',
     () => { errResp('HTTP/1.1 401 Unauthorized', ['"error": "invalid_api_key"', '"message": "API key is not valid"']); },
     { badge: '✗', errColor: '#f85149' }),
-  A('Praxis → Gateway (401)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Praxis → Gateway (401)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
   A('Gateway → Client: 401 Unauthorized', 'gw', 'user', '#f85149', { fromLeft: true, toRight: true, yOff: 10 },
     () => { hHi('HTTP/1.1 401'); }),
 ];
 
-// ── Rate Limit (429) ──
+// ── Budget Exhausted (429) ──
 const flowRL = [
-  ...mkIntake('POST /v1/chat/completions', 'budget check: session at limit'),
+  ...mkIntake('POST /v1/chat/completions', 'budget check: session at limit', null, 'openai_chat'),
   L('policy: budget tree EXHAUSTED (whole-session accounting)', 'f_policy',
     () => { errResp('HTTP/1.1 429 Too Many Requests', ['"error": "rate_limited"', '"message": "Session token budget exceeded"', '"retry_after": 60']); },
     { badge: '✗', errColor: '#f85149' }),
-  A('Praxis → Gateway (429)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Praxis → Gateway (429)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
   A('Gateway → Client: 429 Too Many Requests', 'gw', 'user', '#f85149', { fromLeft: true, toRight: true, yOff: 10 },
     () => { hHi('HTTP/1.1 429'); }),
 ];
 
-// ── Responses API shared intake ──
-function mkRespIntake() {
-  return [
-    ...mkIntake('POST /v1/responses', 'budget tree = {session root: 200k}'),
-    L('routing: Responses API → agentic loop (in-process)', 'f_route'),
-    A('pipeline → Agentic Loop', 'f_route', 'al_validator', '#d2a8ff', { glow: 'al', fromLeft: true, waypoints: [{x:722,y:539},{x:722,y:281}], toRight: true }),
-  ];
-}
-
-// ── Loop iteration: subrequest re-enters the pipeline (the composition guarantee) ──
+// ── One loop iteration = one subrequest re-entering the chain ──
 function mkIteration(iter, provResp, outputItems, ctxAfter) {
   return [
-    A('⟳ iteration ' + iter + ': subrequest re-enters pipeline (in-process)', 'al_subreq', 'f_policy', '#d2a8ff', { fromRight: true, toLeft: true },
+    A('⟳ iteration ' + iter + ': responses_proxy issues subrequest — re-enters the chain', 'f_loop', 'f_ident', '#d2a8ff', { fromLeft: true, waypoints: wpArc, toLeft: true },
       () => { cPush('iteration = ' + iter); }),
-    L('policy: budget tree check — iteration inherits auth · quotas · audit', 'f_policy',
-      () => { cHi('budget tree'); }),
+    L('identity · policy: subrequest inherits auth · budget tree', 'f_policy', () => { cHi('budget'); }),
     L('translation: Responses items → provider format', 'f_trans',
       () => { hCut('POST /v1/responses'); hPush('POST /v1/messages (subrequest)'); }),
     L('guardrails: in-loop check', 'f_guard'),
-    L('credential injection', 'f_cred',
-      () => { hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
-    L('routing: external egress', 'f_route'),
-    A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromLeft: true, waypoints: wpEgressOut, toTop: true, toXOff: 30 }),
-    A('Anthropic responds', 'anthropic', 'f_trans', '#3fb950', { fromRight: true, waypoints: wpEgressBack, toLeft: true, yOff: -6 },
+    L('credential injection', 'f_cred', () => { hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
+    L('router: egress', 'f_route'),
+    A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromBottom: true, fromXOff: -180, toTop: true, toXOff: 30 }),
+    A('Anthropic responds', 'anthropic', 'f_trans', '#3fb950', { fromTop: true, fromXOff: -40, waypoints: wpProvBack, toLeft: true },
       () => { respOK(); bSet(provResp); inspCycle = []; }),
     L('translation → output items · usage → one budget tree', 'f_trans',
       () => { setInspPhase('request'); inspHeaders = [{v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-prog'}]; bSet(outputItems); cSet(ctxAfter); }),
-    A('model output → loop', 'f_trans', 'al_tool_handler', '#3fb950', { fromLeft: true, toRight: true, yOff: 6 }),
+    A('model output → responses_proxy', 'f_trans', 'f_loop', '#3fb950', { fromLeft: true, waypoints: wpOut, toLeft: true, yOff: 6 }),
   ];
 }
 
-const finishSteps = (respId, outputLine) => [
-  L('response-assembler: build ResponseResource', 'al_assembler',
-    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', outputLine, '"usage": one total across all iterations & tool calls']); inspCycle = []; }),
-  L('response-store: persist', 'al_store', () => { bPush('"id": "' + respId + '"'); }),
-  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-    () => { bHi('"object"'); }),
+function mkRespIntake(budgetLine) {
+  return [
+    ...mkIntake('POST /v1/responses', budgetLine || 'budget tree = {session root: 200k}', null, 'openai_responses'),
+    L('openai_responses_validate: param combos ok · IDs generated', 'f_validate',
+      () => { cPush('response_id = resp_abc123'); }),
+  ];
+}
+
+const exitSteps = (hiSel) => [
+  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
   A('Response to client (Responses API format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
-    () => { bHi('"output"'); }),
+    () => { bHi(hiSel || '"output"'); }),
 ];
 
 // ── Flow: Simple Completion ──
 const flowRespSimple = [
   ...mkRespIntake(),
-  L('request-validator', 'al_validator',
-    () => { cPush('validated_params = {...}'); cPush('has_tools = false'); }),
+  L('openai_tool_parse: no tools (has_tools=false)', 'f_validate', () => { cPush('has_tools = false'); }),
+  L('openai_response_store: register backend (store=true default)', 'f_store'),
+  L('openai_responses_proxy: fresh turn — no history to rebuild', 'f_loop'),
   ...mkIteration(1,
     ['"content": [{"type":"text","text":"Transformers..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Transformers..."}]'],
-    ['iteration = 1', 'tool_routing = []', 'budget tree: usage recorded']),
-  L('tool-call-handler: no tool calls', 'al_tool_handler'),
-  L('loop-controller: stop_completed', 'al_loop_ctrl',
-    () => { cPush('loop_action = "stop_completed"'); }),
-  ...finishSteps('resp_abc123', '"output": [{"type":"message","content":"Transformers..."}]'),
+    ['iteration = 1', 'no tool calls', 'budget tree: usage recorded']),
+  L('responses_proxy: no tool calls → complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  L('response path ↑ openai_response_store: persist (buffered JSON)', 'f_store',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Transformers..."}]', '"usage": one total across iterations']); inspCycle = []; bPush('"id": "resp_abc123"'); }),
+  A('store → Response Store (SQLite)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...exitSteps(),
 ];
 
-// ── Flow: RAG + Conversation ──
+// ── Flow: RAG + Conversation (conversation field · rehydrate · append-back) ──
 const flowRespRag = [
-  ...mkRespIntake(),
-  L('request-validator', 'al_validator',
-    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('has_conversation = true'); }),
-  L('conversation-manager: load conversation', 'al_conv_mgr',
-    () => { cPush('conversation_items = [...]'); }),
-  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('tool-registry: register file_search', 'al_tool_reg',
-    () => { cPush('tools = [{type:"file_search",vs_ids:[...]}]'); }),
+  A('Client sends POST /v1/responses (conversation: conv_123)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
+  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true }),
+  L('identity: MaaS key → context', 'f_ident',
+    () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"']); }),
+  L('openai_conversations: conversation field present → has_conversation=true', 'f_conv',
+    () => { bHi('"conversation"'); cPush('has_conversation = true'); }),
+  L('openai_responses_format: classified format=openai_responses', 'f_resolve',
+    () => { hPush('x-praxis-ai-format: openai_responses'); cPush('provider = "anthropic"'); }),
+  L('policy: quota admit · budget tree opened', 'f_policy', () => { cPush('budget tree = {session root}'); }),
+  L('openai_responses_validate: IDs generated', 'f_validate', () => { cPush('response_id = resp_rag456'); }),
+  L('openai_tool_parse: tools = [file_search] (has_tools=true)', 'f_validate', () => { cPush('has_tools = true'); }),
+  L('openai_response_store: register backend', 'f_store'),
+  L('openai_responses_rehydrate: load conversation items', 'f_rehydrate',
+    () => { cPush('rehydrated conversation=conv_123 items=2'); }),
+  A('rehydrate → Conversation Store (load items)', 'f_rehydrate', 'svc_conv', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → rehydrate (turn history)', 'svc_conv', 'f_rehydrate', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('responses_proxy: rebuild body — history + input · strip conversation field', 'f_loop',
+    () => { bCut('"conversation"'); bPush('"input": [{turn-1 history}, {user input}]'); }),
   ...mkIteration(1,
     ['"content": [{"type":"tool_use","name":"file_search",...}]', '"stop_reason": "tool_use"'],
     ['"output": [{"type":"file_search_call",...}]'],
-    ['iteration = 1', 'tool_routing = [{type:"file_search"}]']),
-  L('tool-call-handler: file_search detected', 'al_tool_handler',
-    () => { cHi('tool_routing'); cPush('has_server_side_tools = true'); }),
-  L('loop-controller: continue (within budget tree)', 'al_loop_ctrl',
-    () => { cPush('loop_action = "continue"'); }),
-  L('server-tool-executor: file_search', 'al_srv_exec',
+    ['iteration = 1', 'tool call: file_search']),
+  L('responses_proxy: file_search → dispatch to File Service', 'f_loop'),
+  A('responses_proxy → File Service (vector search)', 'f_loop', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → responses_proxy (chunks + citations)', 'svc_files', 'f_loop', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 },
     () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
-  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
   ...mkIteration(2,
     ['"content": [{"type":"text","text":"Based on Q4 docs..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Q4 results..."}]'],
-    ['iteration = 2', 'total_tool_calls = 1', 'tool_routing = []']),
-  L('tool-call-handler: no tool calls', 'al_tool_handler'),
-  L('loop-controller: stop_completed', 'al_loop_ctrl',
-    () => { cPush('loop_action = "stop_completed"'); }),
-  L('response-assembler: build ResponseResource', 'al_assembler',
-    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Q4 results..."}]', '"usage": whole-session totals']); inspCycle = []; }),
-  L('response-store: persist', 'al_store', () => { bPush('"id": "resp_rag456"'); }),
-  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('conversation-manager: save conversation', 'al_conv_mgr',
-    () => { bPush('"conversation": "my-session-001"'); }),
-  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 }),
-  A('Response to client (Responses API format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
-    () => { bHi('"output"'); }),
+    ['iteration = 2', 'no tool calls']),
+  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  L('response path ↑ store: persisted response id=resp_rag456', 'f_store',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Q4 results..."}]', '"id": "resp_rag456"']); inspCycle = []; }),
+  A('store → Response Store', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('response path ↑ openai_conversations: append-back input+output (count=2)', 'f_conv',
+    () => { bPush('"conversation": "conv_123" (items appended: 2)'); }),
+  A('conversations → Conversation Store (append items)', 'f_conv', 'svc_conv', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → conversations', 'svc_conv', 'f_conv', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...exitSteps(),
 ];
 
 // ── Flow: MCP Agent Loop (streaming) ──
 const flowRespMcp = [
   ...mkRespIntake(),
-  L('request-validator (stream: true)', 'al_validator',
-    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('is_streaming = true'); }),
-  L('tool-registry: MCP tool discovery', 'al_tool_reg',
-    () => { cPush('mcp_tools = ["get_weather","get_forecast"]'); }),
-  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('openai_tool_parse: tools = [mcp] · stream=true', 'f_validate',
+    () => { cPush('has_tools = true'); cPush('is_streaming = true'); }),
+  L('openai_stream_events: SSE accumulation armed', 'f_store'),
+  L('openai_mcp_tool_resolve: tools/list on upstream servers', 'f_fileres',
+    () => { cPush('mcp_tool_map = ["get_weather","get_forecast"]'); }),
+  A('mcp_tool_resolve → MCP Server (tools/list)', 'f_fileres', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → mcp_tool_resolve (tool map → ResponsesState)', 'svc_mcp', 'f_fileres', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('responses_proxy: rebuild body with resolved tool map', 'f_loop'),
   ...mkIteration(1,
     ['"content": [{"type":"tool_use","name":"get_weather",...}]', '"stop_reason": "tool_use"'],
     ['"output": [{"type":"mcp_call","name":"get_weather",...}]'],
-    ['iteration = 1', 'tool_routing = [{type:"mcp",name:"get_weather"}]']),
+    ['iteration = 1', 'tool call: mcp get_weather']),
   A('semantic events stream to client throughout (gateway relays bytes)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 18 }),
-  L('tool-call-handler: MCP tool detected', 'al_tool_handler',
-    () => { cHi('tool_routing'); cPush('has_server_side_tools = true'); }),
-  L('loop-controller: continue', 'al_loop_ctrl',
-    () => { cPush('loop_action = "continue"'); }),
-  L('mcp-executor: execute tool (same identity spine · per-action auth)', 'al_mcp_exec',
+  L('responses_proxy: mcp call → dispatch (same identity spine · per-action auth)', 'f_loop'),
+  A('responses_proxy → MCP Server (invoke)', 'f_loop', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → responses_proxy (result)', 'svc_mcp', 'f_loop', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 },
     () => { bPush('"mcp_result": {"temp":"72F","condition":"sunny"}'); }),
-  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
   ...mkIteration(2,
     ['"content": [{"type":"text","text":"72F and sunny..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"72F, sunny"}]'],
-    ['iteration = 2', 'total_tool_calls = 1', 'tool_routing = []']),
-  L('tool-call-handler: no tool calls', 'al_tool_handler'),
-  L('loop-controller: stop_completed', 'al_loop_ctrl',
-    () => { cPush('loop_action = "stop_completed"'); }),
-  ...finishSteps('resp_mcp789', '"output": [{"type":"message","content":"72F, sunny"}]'),
+    ['iteration = 2', 'no tool calls']),
+  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  L('response path ↑ store: streaming — persistence bypassed (buffering required)', 'f_store'),
+  ...exitSteps(),
 ];
 
 // ── Flow: Background Processing ──
 const flowRespBg = [
   ...mkRespIntake(),
-  L('request-validator (background: true)', 'al_validator',
-    () => { cPush('validated_params = {...}'); cPush('is_background = true'); }),
-  L('tool-registry: file_search + MCP', 'al_tool_reg',
-    () => { cPush('tools = [file_search, mcp]'); }),
-  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('response-store: queue response', 'al_store',
+  L('openai_responses_validate: background=true + store ok (stream+background rejected)', 'f_validate',
+    () => { cPush('is_background = true'); }),
+  L('openai_tool_parse: tools = [file_search]', 'f_validate', () => { cPush('has_tools = true'); }),
+  L('openai_response_store: persist queued response', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"status": "queued"', '"id": "resp_bg789"']); inspCycle = []; }),
-  A('response-store → Response Store (queue)', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  A('Praxis → Gateway (queued response)', 'al_store', 'gw', '#d2a8ff', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+  A('store → Response Store (queue)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (queued response)', 'f_ident', 'gw', '#d2a8ff', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 },
     () => { bHi('"status"'); }),
   A('Client receives queued response (immediate)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 10 },
     () => { bHi('"id"'); }),
+  L('[async] responses_proxy continues under the same budget tree', 'f_loop',
+    () => { setInspPhase('request'); inspHeaders = [{v:'[async worker processing]',s:'keep',id:'h-async'}]; inspBody = []; cSet(['same budget tree — background inherits policy']); }),
   ...mkIteration(1,
-    ['"content": [tool_use:file_search, tool_use:mcp_tool]', '"stop_reason": "tool_use"'],
-    ['"output": [file_search_call, mcp_call]'],
-    ['[async] iteration = 1', 'tool_routing = [file_search, mcp]', 'same budget tree — background inherits policy']),
-  L('tool-call-handler: tools detected', 'al_tool_handler',
-    () => { cPush('has_server_side_tools = true'); }),
-  L('server-tool-executor: file_search', 'al_srv_exec',
-    () => { bPush('"file_search_result": {chunks:[...]}'); }),
-  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('mcp-executor: MCP tool', 'al_mcp_exec',
-    () => { bPush('"mcp_result": {"data":"..."}'); }),
-  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+    ['"content": [tool_use:file_search]', '"stop_reason": "tool_use"'],
+    ['"output": [file_search_call]'],
+    ['[async] iteration = 1', 'tool call: file_search']),
+  L('responses_proxy: file_search → dispatch', 'f_loop'),
+  A('responses_proxy → File Service', 'f_loop', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → responses_proxy', 'svc_files', 'f_loop', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
   ...mkIteration(2,
     ['"content": [{"type":"text","text":"Analysis complete..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Analysis..."}]'],
-    ['[async] iteration = 2', 'total_tool_calls = 2', 'tool_routing = []']),
-  L('loop-controller: stop_completed', 'al_loop_ctrl',
-    () => { cPush('loop_action = "stop_completed"'); }),
-  L('response-assembler: build ResponseResource', 'al_assembler',
-    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]', '"usage": whole-session totals']); inspCycle = []; }),
-  L('response-store: update stored response', 'al_store',
-    () => { bPush('"id": "resp_bg789"'); }),
-  A('response-store → Response Store (update)', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+    ['[async] iteration = 2', 'no tool calls']),
+  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  L('response path ↑ store: update stored response', 'f_store',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]', '"id": "resp_bg789"']); inspCycle = []; }),
+  A('store → Response Store (update)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
   A('Client polls: GET /v1/responses/resp_bg789', 'user', 'gw', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 10 },
-    () => { setInspPhase('request'); inspHeaders = [{v:'GET /v1/responses/resp_bg789',s:'add',id:'h-poll'},{v:'Authorization: Bearer sk-oai-abc123...',s:'add',id:'h-auth'}]; inspBody = []; inspCycle = []; }),
+    () => { setInspPhase('request'); inspHeaders = [{v:'GET /v1/responses/resp_bg789',s:'add',id:'h-poll'}]; inspBody = []; inspCycle = []; }),
   A('Gateway → Client: completed response', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 20 },
     () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]']); bHi('"status"'); }),
 ];
 
-// ── Flow: Full Advanced (mixed tools + function yield) ──
+// ── Flow: Multi-Turn (previous_response_id) — mirrors the praxis demo ──
 const flowRespFull = [
-  ...mkRespIntake(),
-  L('request-validator', 'al_validator',
-    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('has_conversation = true'); cPush('is_streaming = true'); }),
-  L('conversation-manager: load conversation', 'al_conv_mgr',
-    () => { cPush('conversation_items = [...]'); }),
-  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('tool-registry: file_search + MCP + function', 'al_tool_reg',
-    () => { cPush('tools = [file_search, mcp, function]'); }),
-  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkRespIntake('budget tree = {session root}'),
+  L('openai_response_store: register backend (store=true default)', 'f_store'),
+  L('responses_proxy: turn 1 — no history', 'f_loop'),
   ...mkIteration(1,
-    ['"content": [tool_use:file_search, tool_use:mcp, tool_use:function]', '"stop_reason": "tool_use"'],
-    ['"output": [file_search_call, mcp_call, function_call]'],
-    ['iteration = 1', 'tool_routing = [file_search, mcp, function]']),
-  L('tool-call-handler: mixed tools (server-side first)', 'al_tool_handler',
-    () => { cPush('has_server_side_tools = true'); cPush('has_function_tools = true'); }),
-  L('loop-controller: continue', 'al_loop_ctrl',
-    () => { cPush('loop_action = "continue"'); }),
-  L('server-tool-executor: file_search', 'al_srv_exec',
-    () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
-  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('mcp-executor: MCP tool (per-action authorization)', 'al_mcp_exec',
-    () => { bPush('"mcp_result": {"data":"..."}'); }),
-  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+    ['"content": [{"type":"text","text":"Nice to meet you, Seb!"}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"Nice to meet you, Seb!"}]'],
+    ['iteration = 1 (turn 1)', 'no tool calls']),
+  L('responses_proxy: complete (turn 1)', 'f_loop'),
+  L('response path ↑ store: persisted response id=resp_7f3a', 'f_store',
+    () => { respOK(); bSet(['"object": "response"', '"id": "resp_7f3a"', '"output": [{"content":"Nice to meet you, Seb!"}]', '"usage": {"total_tokens": 243}']); inspCycle = []; }),
+  A('store → Response Store (SQLite)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (turn 1 response)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
+  A('Turn 1 → client: total_tokens 243', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"usage"'); }),
+  A('Turn 2: "What is my name?" + previous_response_id=resp_7f3a', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: 14 },
+    () => { setInspPhase('request'); inspHeaders = [{v:'POST /v1/responses',s:'keep',id:'h-path'},{v:'Authorization: Bearer sk-oai-abc123...',s:'keep',id:'h-auth'}]; bSet(['"model": "claude-haiku-4-5-20251001"', '"input": "What is my name and what do I like?"', '"previous_response_id": "resp_7f3a"']); inspCycle = []; }),
+  A('Gateway steers → Praxis', 'gw', 'f_ident', '#58a6ff', { fromBottom: true, fromXOff: 250, toTop: true }),
+  L('identity · format · policy: same session, same budget tree', 'f_policy',
+    () => { cSet(['identity = "cluster-admin"', 'budget tree: continues']); }),
+  L('openai_responses_validate: turn 2 IDs', 'f_validate'),
+  L('openai_responses_rehydrate: lookup resp_7f3a → load stored turns → ResponsesState', 'f_rehydrate',
+    () => { bHi('"previous_response_id"'); cPush('rehydrated: stored turns + current input'); }),
+  A('rehydrate → Response Store (fetch resp_7f3a)', 'f_rehydrate', 'svc_resp_store', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → rehydrate (turn 1 messages)', 'svc_resp_store', 'f_rehydrate', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('responses_proxy: input ← full message array · previous_response_id stripped · content-length updated', 'f_loop',
+    () => { bCut('"previous_response_id"'); bCut('"input"'); bPush('"input": [{turn 1 user}, {turn 1 assistant}, {turn 2 user}]'); }),
   ...mkIteration(2,
-    ['"content": [{"type":"tool_use","name":"get_weather",...}]', '"stop_reason": "tool_use"'],
-    ['"output": [function_call: "get_weather"]'],
-    ['iteration = 2', 'model emits function_call: get_weather']),
-  L('tool-call-handler: function tool → yield to client', 'al_tool_handler',
-    () => { cPush('has_function_tools = true'); cPush('has_server_side_tools = false'); }),
-  L('loop-controller: stop_yield', 'al_loop_ctrl',
-    () => { cPush('loop_action = "stop_yield"'); }),
-  L('response-assembler: function_call in output', 'al_assembler',
-    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{message},{function_call:"get_weather"}]', '"usage": whole-session totals']); inspCycle = []; }),
-  L('response-store: persist', 'al_store', () => { bPush('"id": "resp_full001"'); }),
-  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('conversation-manager: save conversation', 'al_conv_mgr',
-    () => { bPush('"conversation": "my-session-001"'); }),
-  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 }),
-  A('Response to client (function_call in output)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
-    () => { bHi('"output"'); }),
+    ['"content": [{"type":"text","text":"Your name is Seb and you like reverse proxies."}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"Your name is Seb..."}]'],
+    ['iteration = 1 (turn 2)', 'model remembers — rehydration worked']),
+  L('responses_proxy: complete (turn 2)', 'f_loop'),
+  L('response path ↑ store: persist turn 2', 'f_store',
+    () => { respOK(); bSet(['"object": "response"', '"id": "resp_9c1d"', '"output": [{"content":"Your name is Seb..."}]', '"usage": {"total_tokens": 284}']); inspCycle = []; }),
+  A('store → Response Store', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → store', 'svc_resp_store', 'f_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (turn 2 response)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 130, toBottom: true, toXOff: 330 }),
+  A('Turn 2 → client: total_tokens 284 > 243 — history was prepended', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 20 },
+    () => { bHi('"usage"'); }),
 ];
 
 const flowMap = {
@@ -1433,7 +1340,6 @@ const flowMap = {
   resp_simple: flowRespSimple, resp_rag: flowRespRag, resp_mcp: flowRespMcp,
   resp_bg: flowRespBg, resp_full: flowRespFull
 };
-// Auto-number steps, arrow labels, and lightup badges
 Object.values(flowMap).forEach(fl => fl.forEach((s, i) => {
   const n = i + 1;
   s.num = n;
@@ -1445,7 +1351,7 @@ const flowLabels = {
   auth: 'Auth Failure (401)', rl: 'Budget Exhausted (429)',
   resp_simple: 'Simple Completion', resp_rag: 'RAG + Conversation',
   resp_mcp: 'MCP Agent Loop', resp_bg: 'Background Processing',
-  resp_full: 'Full Advanced'
+  resp_full: 'Multi-Turn (previous_response_id)'
 };
 const flowOrder = ['ext', 'inc', 'auth', 'rl', 'resp_simple', 'resp_rag', 'resp_mcp', 'resp_bg', 'resp_full'];
 let flow = flowExt;
