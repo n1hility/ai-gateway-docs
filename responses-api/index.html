@@ -226,19 +226,20 @@ const N = {
 
   praxis: { x: 155, y: 195, w: 1010, h: 497, type: 'container', label: 'Praxis pod · AI data plane · ONE filter chain (one process · one request context)', color: '#d2a8ff' },
 
-  f_ident:     { x: 560, y: 240, w: 520, h: 28, label: 'identity', sublabel: 'MaaS auth · tenant · agent', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
-  f_conv:      { x: 560, y: 273, w: 520, h: 28, label: 'openai_conversations', sublabel: 'CRUD · append-back on response path', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_resolve:   { x: 560, y: 306, w: 520, h: 28, label: 'openai_responses_format', sublabel: 'classify · model from body · MaaS config', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  f_policy:    { x: 560, y: 339, w: 520, h: 28, label: 'policy', sublabel: 'entitlements · quotas · budget tree', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
-  f_validate:  { x: 560, y: 372, w: 520, h: 28, label: 'openai_responses_validate · tool_parse', sublabel: 'param combos · IDs · tools → has_tools facts', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_store:     { x: 560, y: 405, w: 520, h: 28, label: 'openai_response_store · stream_events', sublabel: 'persist (non-streaming) · SSE accumulation', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_rehydrate: { x: 560, y: 438, w: 520, h: 28, label: 'openai_responses_rehydrate', sublabel: 'previous_response_id / conversation → history', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_fileres:   { x: 560, y: 471, w: 520, h: 28, label: 'openai_file_resolve · mcp_tool_resolve', sublabel: 'file_id → file_data · MCP tools/list → tool map', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_loop:      { x: 560, y: 504, w: 520, h: 32, label: 'openai_responses_proxy · agentic loop', sublabel: 'rebuild body · iterations · tool dispatch → subrequests', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  f_trans:     { x: 560, y: 543, w: 520, h: 28, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  f_guard:     { x: 560, y: 576, w: 520, h: 28, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
-  f_cred:      { x: 560, y: 609, w: 520, h: 28, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  f_route:     { x: 560, y: 642, w: 520, h: 28, label: 'router · load_balancer', sublabel: 'path + format headers → cluster · terminal targets', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
+  f_ident:     { x: 560, y: 240, w: 520, h: 26, label: 'identity', sublabel: 'MaaS auth · tenant · agent', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_conv:      { x: 560, y: 271, w: 520, h: 26, label: 'openai_conversations', sublabel: 'CRUD · append-back on response path', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_resolve:   { x: 560, y: 302, w: 520, h: 26, label: 'openai_responses_format', sublabel: 'classify · model from body · MaaS config', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_policy:    { x: 560, y: 333, w: 520, h: 26, label: 'policy', sublabel: 'entitlements · quotas · budget tree', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_validate:  { x: 560, y: 364, w: 520, h: 26, label: 'openai_responses_validate · tool_parse', sublabel: 'param combos · IDs · tools → has_tools facts', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_store:     { x: 560, y: 395, w: 520, h: 26, label: 'openai_response_store · stream_events', sublabel: 'persist (non-streaming) · SSE accumulation', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_rehydrate: { x: 560, y: 426, w: 520, h: 26, label: 'openai_responses_rehydrate', sublabel: 'previous_response_id / conversation → history', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_fileres:   { x: 560, y: 457, w: 520, h: 26, label: 'openai_file_resolve · mcp_tool_resolve', sublabel: 'file_id → file_data · MCP tools/list → tool map', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_loop:      { x: 560, y: 488, w: 520, h: 30, label: 'openai_responses_proxy · name: inference', sublabel: 'rebuild body from ResponsesState · loop rejoin target', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  f_dispatch:  { x: 560, y: 522, w: 520, h: 26, label: 'tool_dispatch', sublabel: 'proposal 00354 · classify tool calls · loop control — not yet implemented', color: '#8b949e', type: 'plugin', inner: true, fs: 13 },
+  f_trans:     { x: 560, y: 553, w: 520, h: 26, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_guard:     { x: 560, y: 584, w: 520, h: 26, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  f_cred:      { x: 560, y: 615, w: 520, h: 26, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  f_route:     { x: 560, y: 646, w: 520, h: 26, label: 'router · load_balancer', sublabel: 'path + format headers → cluster · terminal targets', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
 
   epp: { x: 175, y: 706, w: 255, h: 78, type: 'container', label: 'llm-d EPP · placement layer', color: '#79c0ff' },
   sched: { x: 195, y: 730, w: 215, h: 44, label: 'Endpoint Picker', sublabel: 'consulted per attempt · Praxis as client', color: '#79c0ff', fs: 13, inner: true },
@@ -271,7 +272,8 @@ const tips = {
   f_store: { t:'openai_response_store · openai_stream_events', d:'Persists responses on the response path — buffers the complete JSON to extract and save the output (non-streaming required; streaming bypasses persistence). stream_events accumulates SSE events in-process for downstream consumption.', dt:[['Response path','persist · buffers full JSON'],['Streaming','bypasses persistence'],['Backend','SQLite / SQL store'],['Log','persisted response id=resp_...']], links:[['Demo','https://github.com/praxis-proxy/demos/tree/main/demos/openai-responses-multi-turn']] },
   f_rehydrate: { t:'openai_responses_rehydrate', d:'Multi-turn memory. Resolves previous_response_id from the store (or loads conversation items), assembles the full history into ResponsesState — stored turns plus current input.', dt:[['previous_response_id','lookup in store → load stored turns'],['conversation','load conversation items → prepend'],['Precedence','previous_response_id wins over conversation'],['Log','rehydrated conversation=conv_... items=2']] },
   f_fileres: { t:'openai_file_resolve · openai_mcp_tool_resolve', d:'Resolvers run after rehydrate so stored history is available. file_resolve swaps file_id references for inline file_data via the Files API; mcp_tool_resolve calls tools/list on upstream MCP servers and writes mcp_tool_map to ResponsesState — discovery is a filter, not loop logic.', dt:[['file_resolve','file_id → file_data / image_url via Files API'],['mcp_tool_resolve','tools/list per server → mcp_tool_map'],['Order','after rehydrate · before responses_proxy']] },
-  f_loop: { t:'openai_responses_proxy · agentic loop', d:'The loop is a filter. Rebuilds the outbound body with full history (strips conversation / previous_response_id — already resolved), owns iterations, tool dispatch, and fan-out. Every iteration is a subrequest that re-enters this same chain, inheriting identity, policy, and the budget tree.', dt:[['Rebuilds','input ← full message array · content-length updated'],['Iterations','subrequests re-enter the chain'],['Tool calls','dispatched to terminal services'],['Proof','turn 2 total_tokens > turn 1 (history prepended)']], links:[['Praxis AI filters','https://github.com/praxis-proxy/ai'],['Open Responses','https://github.com/openresponses/openresponses']] },
+  f_loop: { t:'openai_responses_proxy · name: inference', d:'Rebuilds the outbound body from ResponsesState (input ← full message array; strips conversation / previous_response_id — already resolved). Deliberately named \'inference\' in configs so the tool loop\'s branch chain can rejoin here: each iteration re-runs from this point down through translation, guardrails, credentials, and routing, inheriting identity, policy, and the budget tree through the shared request context.', dt:[['Rebuilds','input ← full message array · content-length updated'],['Iterations','subrequests re-enter the chain'],['Tool calls','dispatched to terminal services'],['Proof','turn 2 total_tokens > turn 1 (history prepended)']], links:[['Praxis AI filters','https://github.com/praxis-proxy/ai'],['Open Responses','https://github.com/openresponses/openresponses']] },
+  f_dispatch: { t:'tool_dispatch (proposed — not yet implemented)', d:'The loop-control filter from proposal 00354. Runs on the response path: classifies tool calls, executes server-side tools (MCP, web_search, file_search) via direct calls, appends tool-result messages to ResponsesState.messages, increments the iteration counter, then signals the branch chain: action="loop" rejoins the chain at the filter named inference; action="done" exits (client-side function calls or no tool calls).', dt:[['Status','proposal 00354 · scaffolding merged, filter not yet written'],['Loop','branch chain rejoin: inference · max_iterations mandatory'],['Exits','function calls → done · max_infer_iters → incomplete · finish_reason=length → incomplete'],['Hybrid','server-side tools execute first, then yield to client; continues via previous_response_id']], links:[['Proposal 00354','https://github.com/praxis-proxy/ai/blob/main/docs/proposals/00354_responses-api-filters.md']] },
   f_trans: { t:'API translation', d:'Translates between client and provider formats — request, response, and stream — inside one process. Chunk boundaries and SSE semantics survive because no callout protocol carries the stream.', dt:[['Formats','OpenAI ↔ Anthropic Messages ↔ provider-native'],['Streaming','SSE-aware, in-process'],['Usage','extracted into the budget tree']] },
   f_guard: { t:'guardrails', d:'One guardrails filter on all paths — ingress, egress, in-stream, and inside loop iterations. Engines remain terminal services; the pipeline is where enforcement composes.', dt:[['Coverage','all paths, including in-stream and in-loop'],['Engines','NeMo Guardrails, TrustyAI detectors']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
   f_cred: { t:'credential injection', d:'Injects provider credentials per destination. Client credentials are never exposed; subrequests inherit injected credentials without bypass paths.', dt:[['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex'],['Pattern','BYOK · per-destination injection · rotation']] },
@@ -501,9 +503,9 @@ function drawBounds() {
 
   // Chain group shades: identity/policy · responses (loop is a filter too) · egress
   const groups = [
-    { y: 234, h: 137, color: '#f0883e', label: 'admission →' },
-    { y: 366, h: 176, color: '#d2a8ff', label: 'Responses state & loop — all filters →' },
-    { y: 537, h: 137, color: '#58a6ff', label: 'translation & egress →' },
+    { y: 234, h: 129, color: '#f0883e', label: 'admission →' },
+    { y: 358, h: 194, color: '#d2a8ff', label: 'Responses state & loop — all filters →' },
+    { y: 547, h: 129, color: '#58a6ff', label: 'translation & egress →' },
   ];
   ctx.save();
   groups.forEach(g => {
@@ -525,8 +527,8 @@ function drawBounds() {
   ctx.font = `italic ${ts(13)}px system-ui`;
   ctx.fillStyle = isDark ? '#d2a8ffaa' : '#8250dfaa';
   ctx.textAlign = 'left';
-  ctx.fillText('⟳ every iteration, tool call, and fan-out candidate', tx(185), ty(645));
-  ctx.fillText('   is a subrequest that re-enters this same chain', tx(185), ty(663));
+  ctx.fillText('⟳ tool loop: branch chain rejoins at the filter named', tx(185), ty(645));
+  ctx.fillText('   "inference" · max_iterations bounded (proposal 00354)', tx(185), ty(663));
   ctx.font = `bold ${ts(10)}px system-ui`;
   ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
   ctx.fillText('request path ↓ · response path ↑ (append-back · persist)', tx(560), ty(228));
@@ -1035,9 +1037,8 @@ const A = (t, f, to, c, o, insp) => Object.assign({ t, mode: 'arrow', f, to, c }
 const L = (t, target, insp, o) => Object.assign({ t, mode: 'lightup', target }, o || {}, insp ? { insp } : {});
 
 // waypoint channels
-const wpArc = [{x: 518, y: 520}, {x: 518, y: 254}];               // subrequest re-entry (loop -> top of chain)
-const wpOut = [{x: 528, y: 557}, {x: 528, y: 526}];               // translation -> loop
-const wpProvBack = [{x: 508, y: 698}, {x: 508, y: 557}];          // provider -> translation
+const wpRejoin = [{x: 530, y: 535}, {x: 530, y: 503}];            // tool_dispatch -> inference (branch rejoin)
+const wpProvBack = [{x: 508, y: 698}, {x: 508, y: 566}];          // provider -> translation
 
 function mkIntake(pathLabel, budgetLine, resolveCtx, fmt) {
   const rc = resolveCtx || ['provider = "anthropic"', 'targetModel = "claude-haiku-4-5-20251001"'];
@@ -1082,9 +1083,9 @@ const flowInc = [
   ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}', ['type = "inferencepool"', 'pool = "vllm-llama3-pool"'], 'openai_chat'),
   L('guardrails: request check', 'f_guard'),
   L('router: on-cluster → placement consult', 'f_route'),
-  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:532,y:656},{x:532,y:694},{x:302,y:694}], toTop: true }),
+  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:532,y:659},{x:532,y:694},{x:302,y:694}], toTop: true }),
   L('EPP: KV-cache-aware P/D pod selection', 'sched', () => { cPush('pods = {prefill: pod-b, decode: pod-a}'); }),
-  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 60, waypoints: [{x:362,y:700},{x:542,y:700},{x:542,y:666}], toLeft: true, yOff: 10 }),
+  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 60, waypoints: [{x:362,y:700},{x:542,y:700},{x:542,y:669}], toLeft: true, yOff: 10 }),
   A('Praxis → Sidecar (route to selected pod)', 'f_route', 'sidecar', '#58a6ff', { fromBottom: true, fromXOff: 60, waypoints: [{x:880,y:854}], toTop: true, toXOff: 20 }),
   L('Sidecar coordinates P/D transaction', 'sidecar'),
   A('Sidecar → Prefill Pod B', 'sidecar', 'prefill', '#58a6ff', { fromRight: true, toLeft: true }),
@@ -1093,7 +1094,7 @@ const flowInc = [
   A('Sidecar → Decode Pod A', 'sidecar', 'decode', '#58a6ff', { fromLeft: true, toTop: true, toXOff: -60 }),
   A('Decode pulls KVs via NIXL', 'decode', 'nixl', '#8b949e', { fromRight: true, toLeft: true, yOff: -8 }),
   A('NIXL returns KV cache (RDMA)', 'nixl', 'decode', '#8b949e', { fromLeft: true, toRight: true, yOff: 8 }),
-  A('Decode streams tokens → Praxis', 'decode', 'f_trans', '#3fb950', { fromTop: true, waypoints: [{x:350,y:858},{x:165,y:858},{x:165,y:557}], toLeft: true },
+  A('Decode streams tokens → Praxis', 'decode', 'f_trans', '#3fb950', { fromTop: true, waypoints: [{x:350,y:858},{x:165,y:858},{x:165,y:566}], toLeft: true },
     () => { respOK(); bSet(['"object": "chat.completion"', '"choices": [{"message":{"content":"Hello!"}}]', '"finish_reason": "stop"', '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}']); inspCycle = []; }),
   L('guardrails: response check (in-stream)', 'f_guard'),
   L('policy: usage → budget tree', 'f_policy', () => { bHi('"usage"'); }),
@@ -1129,25 +1130,32 @@ const flowRL = [
     () => { hHi('HTTP/1.1 429'); }),
 ];
 
-// ── One loop iteration = one subrequest re-entering the chain ──
-function mkIteration(iter, provResp, outputItems, ctxAfter) {
+// ── One inference pass: inference rebuild → egress filters → provider → response ──
+function mkPass(iter, rebuildNote, provResp, outputItems, ctxAfter) {
   return [
-    A('⟳ iteration ' + iter + ': responses_proxy issues subrequest — re-enters the chain', 'f_loop', 'f_ident', '#d2a8ff', { fromLeft: true, waypoints: wpArc, toLeft: true },
+    L('openai_responses_proxy (inference), iteration ' + iter + ': ' + rebuildNote, 'f_loop',
       () => { cPush('iteration = ' + iter); }),
-    L('identity · policy: subrequest inherits auth · budget tree', 'f_policy', () => { cHi('budget'); }),
     L('translation: Responses items → provider format', 'f_trans',
-      () => { hCut('POST /v1/responses'); hPush('POST /v1/messages (subrequest)'); }),
-    L('guardrails: in-loop check', 'f_guard'),
-    L('credential injection', 'f_cred', () => { hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
+      () => { hCut('POST /v1/responses'); hPush('POST /v1/messages (iteration ' + iter + ')'); }),
+    L('guardrails: in-loop check (runs every iteration)', 'f_guard'),
+    L('credential injection (every iteration)', 'f_cred', () => { hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
     L('router: egress', 'f_route'),
     A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromBottom: true, fromXOff: -180, toTop: true, toXOff: 30 }),
     A('Anthropic responds', 'anthropic', 'f_trans', '#3fb950', { fromTop: true, fromXOff: -40, waypoints: wpProvBack, toLeft: true },
       () => { respOK(); bSet(provResp); inspCycle = []; }),
-    L('translation → output items · usage → one budget tree', 'f_trans',
+    L('translation → output items · usage accumulated in shared context', 'f_trans',
       () => { setInspPhase('request'); inspHeaders = [{v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-prog'}]; bSet(outputItems); cSet(ctxAfter); }),
-    A('model output → responses_proxy', 'f_trans', 'f_loop', '#3fb950', { fromLeft: true, waypoints: wpOut, toLeft: true, yOff: 6 }),
   ];
 }
+// tool_dispatch verdicts (proposed filter — proposal 00354)
+const dispatchLoop = (what) =>
+  L('tool_dispatch: ' + what + ' → action="loop" (server-side tools only)', 'f_dispatch',
+    () => { cPush('tool_dispatch.action = "loop"'); });
+const rejoinArc =
+  A('⟳ branch chain rejoin: inference (max_iterations bounded)', 'f_dispatch', 'f_loop', '#d2a8ff', { fromLeft: true, waypoints: wpRejoin, toLeft: true });
+const dispatchDone = (why) =>
+  L('tool_dispatch: ' + why + ' → action="done" (exit loop)', 'f_dispatch',
+    () => { cPush('tool_dispatch.action = "done"'); });
 
 function mkRespIntake(budgetLine) {
   return [
@@ -1168,12 +1176,11 @@ const flowRespSimple = [
   ...mkRespIntake(),
   L('openai_tool_parse: no tools (has_tools=false)', 'f_validate', () => { cPush('has_tools = false'); }),
   L('openai_response_store: register backend (store=true default)', 'f_store'),
-  L('openai_responses_proxy: fresh turn — no history to rebuild', 'f_loop'),
-  ...mkIteration(1,
+  ...mkPass(1, 'fresh turn — no history to rebuild',
     ['"content": [{"type":"text","text":"Transformers..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Transformers..."}]'],
-    ['iteration = 1', 'no tool calls', 'budget tree: usage recorded']),
-  L('responses_proxy: no tool calls → complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+    ['no tool calls', 'budget tree: usage recorded (shared context)']),
+  dispatchDone('no tool calls'),
   L('response path ↑ openai_response_store: persist (buffered JSON)', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Transformers..."}]', '"usage": one total across iterations']); inspCycle = []; bPush('"id": "resp_abc123"'); }),
   A('store → Response Store (SQLite)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
@@ -1199,21 +1206,20 @@ const flowRespRag = [
     () => { cPush('rehydrated conversation=conv_123 items=2'); }),
   A('rehydrate → Conversation Store (load items)', 'f_rehydrate', 'svc_conv', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
   A('Conversation Store → rehydrate (turn history)', 'svc_conv', 'f_rehydrate', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('responses_proxy: rebuild body — history + input · strip conversation field', 'f_loop',
-    () => { bCut('"conversation"'); bPush('"input": [{turn-1 history}, {user input}]'); }),
-  ...mkIteration(1,
+  ...mkPass(1, 'rebuild body — history + input · strip conversation field',
     ['"content": [{"type":"tool_use","name":"file_search",...}]', '"stop_reason": "tool_use"'],
     ['"output": [{"type":"file_search_call",...}]'],
-    ['iteration = 1', 'tool call: file_search']),
-  L('responses_proxy: file_search → dispatch to File Service', 'f_loop'),
-  A('responses_proxy → File Service (vector search)', 'f_loop', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → responses_proxy (chunks + citations)', 'svc_files', 'f_loop', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 },
+    ['tool call: file_search']),
+  dispatchLoop('file_search'),
+  A('tool_dispatch → File Service (vector search)', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → tool_dispatch (chunks + citations → messages)', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 },
     () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
-  ...mkIteration(2,
+  rejoinArc,
+  ...mkPass(2, 'rebuild with tool results appended',
     ['"content": [{"type":"text","text":"Based on Q4 docs..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Q4 results..."}]'],
     ['iteration = 2', 'no tool calls']),
-  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  dispatchDone('no tool calls'),
   L('response path ↑ store: persisted response id=resp_rag456', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Q4 results..."}]', '"id": "resp_rag456"']); inspCycle = []; }),
   A('store → Response Store', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
@@ -1235,21 +1241,21 @@ const flowRespMcp = [
     () => { cPush('mcp_tool_map = ["get_weather","get_forecast"]'); }),
   A('mcp_tool_resolve → MCP Server (tools/list)', 'f_fileres', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
   A('MCP Server → mcp_tool_resolve (tool map → ResponsesState)', 'svc_mcp', 'f_fileres', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
-  L('responses_proxy: rebuild body with resolved tool map', 'f_loop'),
-  ...mkIteration(1,
+  ...mkPass(1, 'rebuild body with resolved tool map',
     ['"content": [{"type":"tool_use","name":"get_weather",...}]', '"stop_reason": "tool_use"'],
     ['"output": [{"type":"mcp_call","name":"get_weather",...}]'],
-    ['iteration = 1', 'tool call: mcp get_weather']),
+    ['tool call: mcp get_weather']),
   A('semantic events stream to client throughout (gateway relays bytes)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 18 }),
-  L('responses_proxy: mcp call → dispatch (same identity spine · per-action auth)', 'f_loop'),
-  A('responses_proxy → MCP Server (invoke)', 'f_loop', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → responses_proxy (result)', 'svc_mcp', 'f_loop', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 },
+  dispatchLoop('mcp call (same identity spine · per-action auth)'),
+  A('tool_dispatch → MCP Server (invoke)', 'f_dispatch', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → tool_dispatch (result → messages)', 'svc_mcp', 'f_dispatch', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 },
     () => { bPush('"mcp_result": {"temp":"72F","condition":"sunny"}'); }),
-  ...mkIteration(2,
+  rejoinArc,
+  ...mkPass(2, 'rebuild with tool results appended',
     ['"content": [{"type":"text","text":"72F and sunny..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"72F, sunny"}]'],
     ['iteration = 2', 'no tool calls']),
-  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  dispatchDone('no tool calls'),
   L('response path ↑ store: streaming — persistence bypassed (buffering required)', 'f_store'),
   ...exitSteps(),
 ];
@@ -1268,20 +1274,21 @@ const flowRespBg = [
     () => { bHi('"status"'); }),
   A('Client receives queued response (immediate)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 10 },
     () => { bHi('"id"'); }),
-  L('[async] responses_proxy continues under the same budget tree', 'f_loop',
+  L('[async] processing continues under the same request context', 'f_store',
     () => { setInspPhase('request'); inspHeaders = [{v:'[async worker processing]',s:'keep',id:'h-async'}]; inspBody = []; cSet(['same budget tree — background inherits policy']); }),
-  ...mkIteration(1,
+  ...mkPass(1, 'rebuild body (async)',
     ['"content": [tool_use:file_search]', '"stop_reason": "tool_use"'],
     ['"output": [file_search_call]'],
-    ['[async] iteration = 1', 'tool call: file_search']),
-  L('responses_proxy: file_search → dispatch', 'f_loop'),
-  A('responses_proxy → File Service', 'f_loop', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → responses_proxy', 'svc_files', 'f_loop', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
-  ...mkIteration(2,
+    ['[async] tool call: file_search']),
+  dispatchLoop('file_search'),
+  A('tool_dispatch → File Service', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → tool_dispatch', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  rejoinArc,
+  ...mkPass(2, 'rebuild with tool results appended',
     ['"content": [{"type":"text","text":"Analysis complete..."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Analysis..."}]'],
     ['[async] iteration = 2', 'no tool calls']),
-  L('responses_proxy: complete', 'f_loop', () => { cPush('loop_action = "stop_completed"'); }),
+  dispatchDone('no tool calls'),
   L('response path ↑ store: update stored response', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]', '"id": "resp_bg789"']); inspCycle = []; }),
   A('store → Response Store (update)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
@@ -1296,12 +1303,11 @@ const flowRespBg = [
 const flowRespFull = [
   ...mkRespIntake('budget tree = {session root}'),
   L('openai_response_store: register backend (store=true default)', 'f_store'),
-  L('responses_proxy: turn 1 — no history', 'f_loop'),
-  ...mkIteration(1,
+  ...mkPass(1, 'turn 1 — no history',
     ['"content": [{"type":"text","text":"Nice to meet you, Seb!"}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Nice to meet you, Seb!"}]'],
-    ['iteration = 1 (turn 1)', 'no tool calls']),
-  L('responses_proxy: complete (turn 1)', 'f_loop'),
+    ['turn 1', 'no tool calls']),
+  dispatchDone('no tool calls (turn 1)'),
   L('response path ↑ store: persisted response id=resp_7f3a', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"id": "resp_7f3a"', '"output": [{"content":"Nice to meet you, Seb!"}]', '"usage": {"total_tokens": 243}']); inspCycle = []; }),
   A('store → Response Store (SQLite)', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
@@ -1321,11 +1327,11 @@ const flowRespFull = [
   A('Response Store → rehydrate (turn 1 messages)', 'svc_resp_store', 'f_rehydrate', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
   L('responses_proxy: input ← full message array · previous_response_id stripped · content-length updated', 'f_loop',
     () => { bCut('"previous_response_id"'); bCut('"input"'); bPush('"input": [{turn 1 user}, {turn 1 assistant}, {turn 2 user}]'); }),
-  ...mkIteration(2,
+  ...mkPass(1, 'turn 2 — rehydrated history in body',
     ['"content": [{"type":"text","text":"Your name is Seb and you like reverse proxies."}]', '"stop_reason": "end_turn"'],
     ['"output": [{"type":"message","content":"Your name is Seb..."}]'],
-    ['iteration = 1 (turn 2)', 'model remembers — rehydration worked']),
-  L('responses_proxy: complete (turn 2)', 'f_loop'),
+    ['turn 2', 'model remembers — rehydration worked']),
+  dispatchDone('no tool calls (turn 2)'),
   L('response path ↑ store: persist turn 2', 'f_store',
     () => { respOK(); bSet(['"object": "response"', '"id": "resp_9c1d"', '"output": [{"content":"Your name is Seb..."}]', '"usage": {"total_tokens": 284}']); inspCycle = []; }),
   A('store → Response Store', 'f_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
