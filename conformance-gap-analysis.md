@@ -6,6 +6,20 @@ Analysis of the IPP (Inference Payload Processor) against the [Inference Proxy C
 
 The conformance doc assumes a **transparent same-format proxy** (same API in, same API out). IPP is an **API translator** — it intentionally transforms between OpenAI and provider-native formats (Anthropic Messages API, Vertex GenerateContent, etc.). This distinction is important: sections on "preserve all fields" and "don't modify responses" apply differently depending on whether IPP is in passthrough mode (OpenAI provider) or translation mode (Anthropic/Vertex native).
 
+## Praxis Direction — How These Gaps Close
+
+The AI Gateway direction ([Architecture & Direction](https://docs.google.com/document/d/1-c6qyeLpS2y1aCUUj6CCOtwtXu7AkAkQZuNU878qCpQ/edit)) replaces the ext_proc-attached IPP with the [Praxis](https://github.com/praxis-proxy/praxis) converged data plane, where every capability is a filter in one in-process chain ([praxis-ai](https://github.com/praxis-proxy/ai), [interactive visualizer](https://htmlpreview.github.io/?https://github.com/n1hility/ai-gateway-docs/blob/praxis-responses/responses-api/index.html)). Several gaps below are structural consequences of the callout protocol and close by construction in one process; others become ordinary filter work with a natural landing spot.
+
+| Gap # | Status on Praxis |
+|---|---|
+| 2 (streaming translation) | Closes by construction — SSE is parsed in-process (`SseFrameParser`, `openai_stream_events`, `anthropic_stream_events`); no per-chunk callout to buffer or corrupt chunk boundaries. |
+| 4 (`/v1/responses`) | Implemented as the Responses filter set in praxis-ai (format/validate/store/rehydrate/`responses_proxy`); agentic tool loop specified in [proposal 00354](https://github.com/praxis-proxy/ai/blob/main/docs/proposals/00354_responses-api-filters.md). |
+| 8 (`/v1/messages` as input) | Implemented — `anthropic_messages_format` / `anthropic_to_openai` / `anthropic_stream_events` provide native Anthropic Messages ingress. |
+| 1, 3 (field preservation, `stream_options`) | Translation is a filter over the parsed body in one process; forward-by-default field handling is a filter-local fix rather than a plugin-chain rebuild. |
+| 5 (client disconnect) | Praxis owns both connections in-process (Pingora); no ext_proc boundary to lose disconnect signals across. |
+| 10, 12 (`X-Request-Id`, body limits) | Core built-ins: `request_id` filter and `body_limits` config ceilings. |
+| 6, 7, 9, 11 | Remain ordinary roadmap items (benchmarks, legacy endpoints, embeddings, typed proxy errors), now with a single substrate to land in. |
+
 ## Part 1: IPP Gaps Against the Conformance Doc
 
 ### HIGH Priority

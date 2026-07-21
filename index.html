@@ -41,14 +41,14 @@ footer a:hover{color:var(--accent)}
 <div class="brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 
 <h1>AI Inference Gateway<br><span class="grad">Flow Visualizers</span></h1>
-<p class="tagline">Interactive animated architecture flows for the AI Inference Gateway — RHOAI 3.4 GA</p>
+<p class="tagline">Interactive animated architecture flows — the current gateway (RHOAI 3.4/3.5 GA) and the Praxis converged data plane direction (3.6)</p>
 
 <a href="ai-gateway-flow.html" class="card">
   <div class="card-header">
     <div class="card-icon" style="background:#58a6ff22;border:1px solid #58a6ff44">&#9654;</div>
     <div>
       <div class="card-title">AI Inference Gateway — Full Architecture</div>
-      <div class="card-subtitle">MaaS in Action</div>
+      <div class="card-subtitle">Current stack (RHOAI 3.4/3.5 GA) · MaaS in Action</div>
     </div>
   </div>
   <div class="card-desc">Complete end-to-end flow through the gateway: Kuadrant auth, rate limiting, IPP payload processing, external provider routing (Anthropic, OpenAI, Azure, Bedrock, Vertex), and llm-d on-cluster inference with P/D disaggregation.</div>
@@ -65,7 +65,7 @@ footer a:hover{color:var(--accent)}
     <div class="card-icon" style="background:#e3b34122;border:1px solid #e3b34144">&#128176;</div>
     <div>
       <div class="card-title">External Metering Plugin — Chargeback Flow</div>
-      <div class="card-subtitle">Circuit Breaker + Token Usage Reporting</div>
+      <div class="card-subtitle">Current stack (3.4/3.5) · Circuit Breaker + Token Usage Reporting</div>
     </div>
   </div>
   <div class="card-desc">How the external-metering plugin enables enterprise chargeback: pre-request budget validation via circuit breaker, and post-response token usage reporting via CloudEvents to OpenMeter, Stripe, or custom billing systems.</div>
@@ -102,12 +102,12 @@ footer a:hover{color:var(--accent)}
       <div class="card-subtitle">Agentic Loops & Tool Invocation</div>
     </div>
   </div>
-  <div class="card-desc">Processing pipeline for the Responses API: auth, hydration, guardrails, inference, and the agentic loop where tool calls cycle back through inference. Shows MCP tools, function hydration, and guardrails preparation.</div>
+  <div class="card-desc">The Praxis converged data plane (3.6 direction): one filter chain where conversation state, validation, persistence, rehydration, and the agentic loop itself are all filters. Steer-to-self attachment, multi-turn rehydration with previous_response_id, tool-loop branch rejoin at the inference waypoint, and terminal backends that serve but never route.</div>
   <div class="card-stats">
-    <span class="stat stat-purple">3 Flows</span>
-    <span class="stat stat-gold">Agentic Loop</span>
-    <span class="stat stat-orange">Guardrails</span>
-    <span class="stat stat-green">Inference</span>
+    <span class="stat stat-purple">9 Flows</span>
+    <span class="stat stat-blue">1 Filter Chain</span>
+    <span class="stat stat-gold">Loop = a Filter</span>
+    <span class="stat stat-green">Multi-Turn Rehydrate</span>
   </div>
 </a>
 
