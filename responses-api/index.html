@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Inference Gateway -- Flow Visualizer</title>
+<title>AI Gateway (Praxis) -- Flow Visualizer</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
@@ -119,14 +119,14 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <canvas id="mobile-canvas"></canvas>
   <div class="mobile-splash-content">
     <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
-    <div class="badge"><span>RHOAI 3.5–3.7</span> GA</div>
-    <h1>AI Inference Gateway<br><span class="grad">MaaS in Action</span></h1>
+    <div class="badge"><span>RHOAI 3.6</span> Praxis</div>
+    <h1>AI Gateway<br><span class="grad">Praxis Data Plane</span></h1>
     <p class="sub">Interactive animated architecture flow<br>for the AI Inference Gateway</p>
     <div class="stats">
       <div class="stat blue">9 Flows</div>
-      <div class="stat green">5 Providers</div>
-      <div class="stat orange">88 Steps</div>
-      <div class="stat purple">40+ Components</div>
+      <div class="stat green">1 Pipeline</div>
+      <div class="stat orange">1 Budget Tree</div>
+      <div class="stat purple">0 Policy Bypasses</div>
     </div>
     <div class="laptop-msg">
       <div class="laptop-icon">&#128187;</div>
@@ -137,7 +137,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+<div class="viz-title">AI Gateway &mdash; Praxis Data Plane Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
@@ -187,9 +187,9 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>IPP / Agentic Loop</div>
-  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#58a6ff,#3fb950);border-radius:50%"></div>Req / Resp Plugins</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Identity / Policy / Guardrails</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Loop / Pipeline Subrequest</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff"></div>Placement / Config</div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -218,64 +218,50 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: -20, y: 155, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
+  user: { x: -20, y: 108, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 250, y: 140, w: 700, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
+  gw: { x: 155, y: 108, w: 1010, h: 58, label: 'Kubernetes Gateway', sublabel: '(Envoy / OSSM) · TLS · steer AI traffic once · then relay bytes', color: '#58a6ff', fs: 18 },
 
-  ipp: { x: 740, y: 260, w: 380, h: 560, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
-  // Policy plugins
-  auth:      { x: 770, y: 318, w: 320, h: 40, label: 'Auth (Authorino)', sublabel: '(TBD Kuadrant)', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
-  rlimit:    { x: 770, y: 360, w: 320, h: 40, label: 'Rate Limit (Limitador)', sublabel: '(TBD Kuadrant)', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
-  // Request plugins
-  p_rguard:  { x: 770, y: 402, w: 320, h: 40, label: 'guardrails', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, soon: true },
-  p_ims:     { x: 770, y: 444, w: 320, h: 40, label: 'intelligent-model-selection [tbd]', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
-  p_mpr:     { x: 770, y: 486, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bfth:    { x: 770, y: 524, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bmth:    { x: 770, y: 562, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_at_req:  { x: 770, y: 600, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:     { x: 770, y: 638, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  // Response plugins
-  p_at_resp: { x: 770, y: 716, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
-  p_resp_guard: { x: 770, y: 754, w: 320, h: 40, label: 'guardrails', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
+  praxis: { x: 155, y: 195, w: 1010, h: 470, type: 'container', label: 'Praxis pod · AI data plane (one process · one request context)', color: '#d2a8ff' },
 
-  // External model — far left, outside cluster
-  anthropic: { x: -40, y: 300, w: 140, h: 55, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 15 },
+  // Filter pipeline — one ordered pipeline, every request and subrequest traverses it
+  fp: { x: 735, y: 228, w: 400, h: 412, type: 'container', label: 'Filter Pipeline · config: MaaS-managed', color: '#58a6ff' },
+  f_ident:   { x: 765, y: 268, w: 340, h: 38, label: 'identity', sublabel: 'MaaS auth · tenant · agent identity', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
+  f_resolve: { x: 765, y: 310, w: 340, h: 38, label: 'model resolution', sublabel: 'from body · MaaS-managed config', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  f_policy:  { x: 765, y: 352, w: 340, h: 38, label: 'policy', sublabel: 'entitlements · quotas · budget tree', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
+  f_trans:   { x: 765, y: 394, w: 340, h: 38, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  f_guard:   { x: 765, y: 436, w: 340, h: 38, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
+  f_cred:    { x: 765, y: 478, w: 340, h: 38, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  f_route:   { x: 765, y: 520, w: 340, h: 38, label: 'routing', sublabel: 'terminal targets · egress · placement', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
 
-  // External services — left side, targets of agentic loop "External" boundary plugins
-  svc_guardrails:  { x: -55, y: 420, w: 150, h: 40, label: 'NeMo Guardrails', color: '#f0883e', fs: 12 },
+  // Agentic loop — loops and fan-out are pipeline primitives
+  al: { x: 175, y: 228, w: 530, h: 412, type: 'container', label: 'Agentic Loop · every iteration re-enters the pipeline', color: '#d2a8ff' },
+  al_validator:    { x: 195, y: 268, w: 490, h: 26, label: 'request-validator', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_conv_mgr:     { x: 195, y: 296, w: 490, h: 26, label: 'conversation-manager', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_tool_reg:     { x: 195, y: 324, w: 490, h: 26, label: 'tool-registry', sublabel: '(MCP discovery)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  al_subreq:       { x: 195, y: 366, w: 490, h: 26, label: 'pipeline subrequest', sublabel: '(iteration · tool call · fan-out candidate)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
+  al_tool_handler: { x: 195, y: 394, w: 490, h: 26, label: 'tool-call-handler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_loop_ctrl:    { x: 195, y: 422, w: 490, h: 26, label: 'loop-controller', sublabel: '(one budget tree)', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_srv_exec:     { x: 195, y: 450, w: 490, h: 26, label: 'server-tool-executor', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_mcp_exec:     { x: 195, y: 478, w: 490, h: 26, label: 'mcp-executor', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
+  al_assembler:    { x: 195, y: 520, w: 490, h: 26, label: 'response-assembler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+  al_store:        { x: 195, y: 548, w: 490, h: 26, label: 'response-store', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
+
+  // Terminal row — they serve, they don't route
+  epp: { x: 175, y: 700, w: 255, h: 78, type: 'container', label: 'llm-d EPP · placement layer', color: '#79c0ff' },
+  sched: { x: 195, y: 724, w: 215, h: 44, label: 'Endpoint Picker', sublabel: 'consulted per attempt · Praxis as client', color: '#79c0ff', fs: 13, inner: true },
+  anthropic: { x: 470, y: 706, w: 180, h: 62, label: 'Anthropic', sublabel: 'external provider · direct egress', color: '#3fb950', fs: 15 },
+  maas: { x: 920, y: 706, w: 245, h: 62, label: 'MaaS', sublabel: 'definition layer · keys · quotas · models', color: '#79c0ff', fs: 15 },
+
+  // Terminal resource services (OGX-behind-Praxis pattern) — left column
+  svc_guardrails:  { x: -55, y: 420, w: 150, h: 40, label: 'NeMo Guardrails', sublabel: '(engine)', color: '#f0883e', fs: 12 },
   svc_files:       { x: -55, y: 470, w: 150, h: 40, label: 'File Service', sublabel: '(S3 / Vector Store)', color: '#3fb950', fs: 12 },
   svc_websearch:   { x: -55, y: 520, w: 150, h: 40, label: 'Web Search', color: '#3fb950', fs: 13, soon: true },
   svc_mcp:         { x: -55, y: 570, w: 150, h: 40, label: 'MCP Server', color: '#d2a8ff', fs: 13 },
   svc_conv:        { x: -55, y: 630, w: 150, h: 40, label: 'Conversation', sublabel: 'Store', color: '#3fb950', fs: 13 },
   svc_resp_store:  { x: -55, y: 680, w: 150, h: 40, label: 'Response Store', color: '#3fb950', fs: 13 },
-
-  // MaaS API — next to Auth plugin, called for key validation
-  maas: { x: 400, y: 305, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
-
-  // Agentic Loop container and plugins
-  al: { x: 170, y: 375, w: 540, h: 390, type: 'container', label: 'Agentic Loop (praxis)', color: '#d2a8ff' },
-  // Intake plugins
-  al_validator:    { x: 195, y: 408, w: 490, h: 26, label: 'request-validator', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_conv_mgr:     { x: 195, y: 436, w: 490, h: 26, label: 'conversation-manager', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_tool_reg:     { x: 195, y: 464, w: 490, h: 26, label: 'tool-registry', sublabel: '(MCP discovery)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  // Loop plugins
-  al_guardrails:   { x: 195, y: 500, w: 490, h: 26, label: 'guardrails', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
-  al_api_trans:    { x: 195, y: 528, w: 490, h: 26, label: 'api-translation', sublabel: '(req / resp)', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_inference:    { x: 195, y: 556, w: 490, h: 26, label: 'inference-caller', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
-  al_tool_handler: { x: 195, y: 584, w: 490, h: 26, label: 'tool-call-handler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_loop_ctrl:    { x: 195, y: 612, w: 490, h: 26, label: 'loop-controller', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_srv_exec:     { x: 195, y: 640, w: 490, h: 26, label: 'server-tool-executor', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_mcp_exec:     { x: 195, y: 668, w: 490, h: 26, label: 'mcp-executor', color: '#d2a8ff', type: 'plugin', inner: true, fs: 12 },
-  // Completion plugins
-  al_assembler:    { x: 195, y: 706, w: 490, h: 26, label: 'response-assembler', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-  al_store:        { x: 195, y: 734, w: 490, h: 26, label: 'response-store', color: '#3fb950', type: 'plugin', inner: true, fs: 12 },
-
-  // llm-d Scheduler / EPP — centered under all components
-  epp: { x: 460, y: 770, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 490, y: 792, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
 
   pool: { x: 200, y: 870, w: 1000, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 380, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
@@ -284,48 +270,44 @@ const N = {
   prefill: { x: 860, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
 };
 
+
 const tips = {
-  gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs ext_proc filters for payload processing (IPP) and scheduling (EPP).', dt:[['Filters','IPP (ext_proc), EPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Routing','External model providers or on-cluster InferencePool'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['Kuadrant Operator','https://github.com/Kuadrant/kuadrant-operator']] },
-  p_rguard: { t:'guardrails (request)', d:'Unified guardrails plugin — evaluates safety and content policies on the incoming request. Dual-hook plugin shared with the Responses API agentic loop. NeMo Guardrails endpoint.', dt:[['Status','Coming Soon'],['Phase','Request'],['Boundary','External'],['Hooks','on_request (intake)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Type','ext_proc plugin']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails'],['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_ims: { t:'intelligent-model-selection [tbd]', d:'Automatically selects the optimal model or provider based on request characteristics, cost, latency, and availability. Scope and complexity are undefined.', dt:[['Status','TBD'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_mpr: { t:'model-provider-resolver', d:'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider, target model ID, and endpoint URL.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_bmth: { t:'base-model-to-header', d:'Resolves LoRA adapter names to their base model using Kubernetes ConfigMaps. Sets X-Gateway-Base-Model-Name header so EPP can select pods running the correct base model.', dt:[['Header Set','X-Gateway-Base-Model-Name'],['Data Source','Kubernetes ConfigMaps (adapter→base model mappings)'],['Use Case','LoRA adapter routing to correct InferencePool'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI → Anthropic Messages API'],['Path Rewrite','/v1/chat/completions → /v1/messages'],['Headers Added','anthropic-version: 2023-06-01'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['Secret Label','inference.networking.k8s.io/bbr-managed'],['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Azure','api-key: ...'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic → OpenAI format'],['Transforms','content→choices, stop_reason→finish_reason, usage normalization'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_resp_guard: { t:'guardrails (response)', d:'Unified guardrails plugin — evaluates content policies on the provider response after api-translation. Dual-hook plugin shared with the Responses API agentic loop. NeMo Guardrails endpoint.', dt:[['Status','Coming Soon'],['Phase','Response'],['Boundary','External'],['Hooks','on_response (per iteration)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Type','ext_proc plugin']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails'],['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  auth: { t:'Auth (Authorino)', logo:'redhat-logo.svg', d:'Authorino auth plugin running inside IPP. Validates the MaaS API key and resolves subscription info.', dt:[['Protocol','gRPC'],['Validation','Calls MaaS API /internal/v1/api-keys/validate'],['Headers Injected','X-MaaS-Username, X-MaaS-Subscription'],['Error','401 Unauthorized']], links:[['Authorino Repo','https://github.com/Kuadrant/authorino']] },
-  rlimit: { t:'Rate Limit (Limitador)', logo:'redhat-logo.svg', d:'Limitador rate-limit plugin running inside IPP. Implements token-based rate limiting via TokenRateLimitPolicy.', dt:[['Protocol','gRPC'],['Request Phase','Check if token quota allows'],['Response Phase','Read usage.total_tokens, report consumed'],['Policy','TokenRateLimitPolicy'],['Error','429 Too Many Requests']], links:[['Limitador Repo','https://github.com/Kuadrant/limitador']] },
-  maas: { t:'MaaS API', logo:'redhat-logo.svg', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Requires 3 CRDs to be created for each model offering.', dt:[['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRD: MaaSModelRef','Maps user-facing model name to provider endpoint and target model ID'],['CRD: MaaSAuth','Configures API key authentication via K8s Secret'],['CRD: MaaSSubscription','Defines quota — associates user/team with allowed models and rate limits']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service'],['MaaSModelRef CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-model-ref/'],['MaaSAuth CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-auth/'],['MaaSSubscription CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-subscription/']] },
-  epp: { t:'llm-d Scheduler / EPP', d:'An ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for on-cluster inference.', dt:[['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Supports','P/D disaggregated serving, prefix caching']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
-  sched: { t:'Endpoint Picker', d:'Selects the optimal pod for disaggregated serving. Routes to Prefill or Decode variants based on KV cache utilization and model affinity.', dt:[['Metrics','KV cache utilization, queue depth, model affinity'],['Output','Selected pod IP (Prefill + Decode)'],['Mode','P/D disaggregation or unified']], links:[['llm-d Scheduler','https://github.com/llm-d/llm-d-inference-scheduler']] },
-  sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction. Communicates with the prefill worker IP and orchestrates the KV cache transfer to the decode worker.', dt:[['Role','Transaction coordinator'],['Coordinates','Prefill worker IP ↔ Decode worker'],['Triggers','KVXfer metadata exchange']] },
-  prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the input prompt and generates the initial KV cache. Returns KVXfer metadata to enable the decode pod to pull KV cache via NIXL.', dt:[['Engine','vLLM'],['Function','Prompt processing, KV cache generation'],['Output','KVXfer metadata'],['Transfer','Via NIXL to Decode Pod']], links:[['vLLM','https://github.com/vllm-project/vllm'],['vLLM Docs','https://docs.vllm.ai/']] },
-  decode: { t:'Decode Pod A (vLLM)', d:'Generates output tokens auto-regressively using KV cache pulled from the prefill pod via NIXL high-speed interconnect.', dt:[['Engine','vLLM'],['Function','Auto-regressive token generation'],['Input','KV cache via NIXL pull'],['Response','Streamed back to Gateway']], links:[['vLLM','https://github.com/vllm-project/vllm'],['vLLM Docs','https://docs.vllm.ai/']] },
-  nixl: { t:'NIXL — KV Transfer', d:'NVIDIA Inference Xfer Library. High-speed KV cache transfer between prefill and decode pods over GPU-direct RDMA or Data Center Network.', dt:[['Full Name','NVIDIA Inference Xfer Library'],['Transport','GPU-direct RDMA, DCN'],['Direction','Decode pulls from Prefill'],['Metadata','KVXfer descriptors']], links:[['NIXL Repo','https://github.com/ai-dynamo/nixl']] },
-  anthropic: { t:'Anthropic', d:'Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format. Requires an ExternalModel CRD to configure.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Translation','OpenAI ↔ Anthropic Messages'],['CRD','ExternalModel (inference.opendatahub.io)'],['CRD Config','provider: anthropic, targetModel: claude-haiku-4-5-20251001, url: https://api.anthropic.com']], links:[['Anthropic Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/anthropic.md'],['ExternalModel CRD','https://github.com/opendatahub-io/models-as-a-service']] },
-  // External service tooltips
-  svc_guardrails: { t:'NeMo Guardrails', d:'NVIDIA NeMo Guardrails moderation endpoint. Called by the guardrails plugin for input/output safety evaluation.', dt:[['Called By','guardrails plugin (on_request + on_response)'],['Function','Content policy evaluation'],['Phase','Intake (input) + Loop (output per iteration)']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
-  svc_files: { t:'File Service (S3 / Vector Store)', d:'Vector store service for file_search tool execution. Called by server-tool-executor to search uploaded documents and return ranked chunks with citations.', dt:[['Called By','server-tool-executor (file_search dispatch)'],['Function','Semantic search over vector stores'],['Output','Ranked document chunks + citations'],['Backend','S3-compatible object store + vector index']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  svc_websearch: { t:'Web Search', d:'Web search API for the web_search tool. Called by server-tool-executor. No backend deployed yet — returns unsupported tool error until configured.', dt:[['Status','Coming Soon'],['Called By','server-tool-executor (web_search dispatch)'],['Backends','Tavily, Brave Search, SerpAPI (configurable)']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  svc_mcp: { t:'MCP Server', d:'External Model Context Protocol server. Called by tool-registry for tool discovery (list_mcp_tools) and by mcp-executor for tool invocation. Sessions are cached for request duration.', dt:[['Called By','tool-registry (discovery) + mcp-executor (invocation)'],['Protocol','MCP over SSE or stdio'],['Session','Cached via MCPSessionManager'],['Events','response.mcp_list_tools.*, response.mcp_call.*']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
-  svc_conv: { t:'Conversation Store', d:'Dual storage for conversation state. Stores structured conversation items (for UI/metadata) and raw chat messages (for inference context). Called by conversation-manager.', dt:[['Called By','conversation-manager (on_request load + on_response save)'],['Dual Storage','Conversation items + message store'],['Load','list_items() + get_conversation_messages()'],['Save','add_items() + store_conversation_messages()']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  svc_resp_store: { t:'Response Store', d:'SQL persistence for response objects. Called by response-store to persist responses and by hydrate-prompt to load previous responses for multi-turn continuation.', dt:[['Called By','response-store (write) + hydrate-prompt (read)'],['Write','upsert_response_object()'],['Read','get_response_object(response_id)'],['Retrieval','GET /v1/responses/{id}']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  // Agentic Loop tooltips
-  al_validator: { t:'request-validator', d:'Format-aware validation: validates Chat Completions messages/params OR Responses API input/tools/conversation. Writes request_format and validated parameters to CycleState.', dt:[['Phase','Intake'],['Boundary','Local'],['IPP Status','Extends'],['Validates','model, input, tools, tool_choice, max_tool_calls, stream, background'],['Output','CycleState: request_format, validated_params, has_tools, is_streaming'],['Plugin Action','Continue or Reject']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses'],['Agentic Loop Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  al_conv_mgr: { t:'conversation-manager', d:'Loads and saves conversation state. Dual-hook plugin: on_request loads conversation items + stored messages, on_response persists input + output items and messages for the next turn.', dt:[['Phase','Intake + Completion'],['Boundary','External'],['on_request','Load conversation items + stored messages'],['on_response','Save input + output items, persist messages'],['Mutual Exclusivity','Cannot be used with previous_response_id'],['Dual Storage','Conversation items (UI) + message store (inference)']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_tool_reg: { t:'tool-registry (MCP discovery)', d:'Resolves and registers available tools for the request. Connects to MCP servers to discover tools, applies allowed_tools filtering, and stores the resolved tool map in CycleState.', dt:[['Phase','Intake'],['Boundary','External'],['Tool Types','function, mcp, web_search, file_search, code_interpreter, custom'],['MCP Discovery','Connects to MCP servers, lists tools, caches definitions'],['Events','response.mcp_list_tools.in_progress/completed']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses'],['MCP Protocol','https://modelcontextprotocol.io']] },
-  al_guardrails: { t:'guardrails', d:'Unified guardrails plugin — evaluates safety and content policies on both request (intake) and response (each loop iteration). Same plugin used in both IPP and agentic loop. NeMo Guardrails endpoint.', dt:[['Phase','Intake + Loop'],['Boundary','External'],['Hooks','on_request (intake), on_response (per iteration)'],['On Violation','Reject (intake) or retry with feedback (mid-loop)'],['Unified Plugin','Same guardrails plugin used in both IPP and agentic loop'],['Config','Enabled/disabled per request or globally']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
-  al_api_trans: { t:'api-translation (req / resp)', d:'Translates between Responses API format and provider-native formats. Dual-hook plugin: on_request converts input items to provider format, on_response converts provider response back to Responses API output items.', dt:[['Phase','Loop (before + after inference)'],['Boundary','Local'],['Request Hook','Responses API items → provider-native (e.g., /v1/messages)'],['Response Hook','Provider response → Responses API output items + streaming events'],['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex AI']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  al_inference: { t:'inference-caller', d:'Calls the model provider for inference. The call goes back through the existing IPP pipeline (auth, rate-limit, api-translation, apikey-injection) to the external model.', dt:[['Phase','Loop'],['Boundary','External'],['Nested Call','POST /v1/chat/completions via IPP pipeline'],['Truncation','Inline — trims context if truncation=auto'],['Isolation','Inner IPP pipeline has its own CycleState']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor']] },
-  al_tool_handler: { t:'tool-call-handler', d:'Detects, classifies, and routes tool calls from model output. Writes routing decisions to CycleState for the executor to dispatch.', dt:[['Phase','Loop'],['Boundary','Local'],['Routing','server-side tools → executor fan-out, function tools → yield to client'],['CycleState','tool_routing[], has_server_side_tools, has_function_tools'],['Events','response.output_item.done, response.function_call_arguments.*']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_loop_ctrl: { t:'loop-controller', d:'Evaluates loop state and signals whether to continue iterating or stop. Writes loop_action to CycleState — the executor reads it and acts.', dt:[['Phase','Loop'],['Boundary','Local'],['Signals','continue, stop_completed, stop_incomplete, stop_yield, stop_failed'],['Limits','max_tool_calls, max_output_tokens, max_infer_iters'],['Usage','Accumulates total_input_tokens, total_output_tokens across iterations']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_srv_exec: { t:'server-tool-executor', d:'Executes internally-hosted tools via a configuration-driven backend dispatch table. Routes to file_search, web_search, code_interpreter, and other tool backends.', dt:[['Phase','Loop (tool execution)'],['Boundary','External'],['Tools','file_search, web_search, code_interpreter, image_gen, computer, custom'],['Dispatch','Config-driven backend URL per tool type'],['Parallel','Supports parallel_tool_calls=true']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_mcp_exec: { t:'mcp-executor', d:'Orchestrates calls to external MCP servers. Reuses the MCP session from tool-registry discovery. Supports the MCP approval flow for tool authorization.', dt:[['Phase','Loop (tool execution)'],['Boundary','External'],['Session','Reuses session from tool-registry discovery'],['Approval','mcp_approval_request → client review → mcp_approval_response'],['Events','response.mcp_call.in_progress/completed/failed']], links:[['MCP Protocol','https://modelcontextprotocol.io'],['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_assembler: { t:'response-assembler', d:'Builds the final ResponseResource object with all spec-required fields: output items, accumulated usage, context edits, and echo-back fields.', dt:[['Phase','Completion'],['Boundary','Local'],['Output','ResponseResource with object="response"'],['Fields','id, status, output, usage, context_edits, echo-back params'],['Events','response.output_item.done, response.completed']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
-  al_store: { t:'response-store', d:'Persists the response when store=true. The stored response is retrievable via GET /v1/responses/{id} and can be referenced by future requests via previous_response_id.', dt:[['Phase','Completion'],['Boundary','External'],['Condition','Runs when store=true'],['Retrieval','GET /v1/responses/{id}'],['Continuation','Referenced via previous_response_id in next request']], links:[['Open Responses Spec','https://github.com/openresponses/openresponses']] },
+  gw: { t:'Kubernetes Gateway (Envoy / OSSM)', d:'The front door. Terminates TLS, serves non-AI traffic, and makes exactly one AI decision per request: recognize AI traffic and steer it to Praxis. It never reads a request body and never processes a stream — after admission, it relays bytes. This role is transitional; a parallel evaluation determines when Praxis takes the gateway role.', dt:[['Sees','hostname, path, headers — never the body'],['Owns','TLS termination · non-AI traffic · steering · byte relay'],['Never','body parsing, stream processing, per-message callouts'],['Granularity','route']], links:[['Gateway API','https://gateway-api.sigs.k8s.io/'],['Praxis','https://github.com/praxis-proxy/praxis']] },
+  fp: { t:'Filter Pipeline', d:'Every capability is a filter over one request context in one ordered pipeline, fed by MaaS-managed configuration as the single source of truth. Ordering guarantees resolution precedes enforcement. Every iteration, tool call, and fan-out candidate is a subrequest through this same pipeline.', dt:[['Order','identity → resolve → policy → translate → guardrails → credentials → route'],['Context','one request context — no header smuggling between components'],['Config','MaaS-managed configuration (single authority)'],['Streams','processed in-process — no per-chunk callout protocol']], links:[['Praxis','https://github.com/praxis-proxy/praxis'],['AI filters','https://github.com/praxis-proxy/ai']] },
+  f_ident: { t:'identity', d:'Validates the MaaS API key and resolves user, tenant, and agent identity into the request context. Loop iterations inherit this identity — re-entrant traffic can no longer skip auth.', dt:[['Validates','MaaS API key / subscription'],['Context set','identity, tenant, subscription'],['Fixes','unauthenticated internal paths, header-trust smuggling'],['Error','401 Unauthorized']] },
+  f_resolve: { t:'model resolution', d:'Resolves the logical model from the request body via the MaaS-managed configuration — the unified model-in-body entry point works because resolution happens in-pipeline, before enforcement. No X-Gateway-* header extraction.', dt:[['Input','"model" field in body'],['Source','MaaS-managed configuration'],['Context set','provider, targetModel, endpoint / pool'],['Replaces','model-provider-resolver, body-field-to-header, base-model-to-header']] },
+  f_policy: { t:'policy', d:'Entitlements, quotas, and budgets enforced after resolution, so limits can key on the resolved model. Maintains the session budget tree — every loop iteration and fan-out candidate draws from one enforceable budget.', dt:[['Keys on','resolved model, tenant, session'],['Budget','one policy tree across iterations and tool calls'],['Definition layer','MaaS-defined policy (Kuadrant CRDs)'],['Error','429 Too Many Requests']] },
+  f_trans: { t:'API translation', d:'Translates between client and provider formats — request, response, and stream — inside one process. Chunk boundaries and SSE semantics survive because no per-message callout protocol carries the stream.', dt:[['Formats','OpenAI ↔ Anthropic Messages ↔ provider-native'],['Streaming','SSE-aware, in-process'],['Usage','extracts usage into the budget tree'],['Carries forward','IPP translation plugins as the filter spec']] },
+  f_guard: { t:'guardrails', d:'One guardrails filter on all paths — ingress, egress, inside streams, and inside loop iterations. Engines (NeMo, TrustyAI detectors) remain terminal services; the pipeline is where enforcement composes.', dt:[['Coverage','all paths, including in-stream and in-loop'],['Engines','NeMo Guardrails, TrustyAI detector orchestrator'],['Replaces','parallel per-path integrations']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  f_cred: { t:'credential injection', d:'Injects provider credentials per destination. Client credentials are never exposed; loop iterations inherit injected credentials without bypass paths.', dt:[['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex'],['Pattern','BYOK, per-destination injection, rotation'],['Source','K8s Secrets / Vault (hardening path)']] },
+  f_route: { t:'routing', d:'The single routing authority. Everything behind it is terminal: it serves, it does not route. Routes to external providers (egress), the placement layer (EPP consult), resource services, or back into the agentic loop.', dt:[['Targets','external egress · InferencePool via EPP · resources · loop'],['Invariant','one router, one config authority'],['Fallback','re-entrant, with rewritten requests (not identical replay)']] },
+  al: { t:'Agentic Loop', d:'Praxis owns the agentic loop as a pipeline primitive. Every iteration, tool call, and fan-out candidate is a subrequest through the same filter pipeline, inheriting auth, quotas, metering, and audit — the loop executes on the Praxis runtime, never inside a callout exchange.', dt:[['Invariant','loop on runtime · steer-to-self'],['Budget','nested budgets form one enforceable policy tree'],['Replaces','OGX second half-gateway · duplicate router'],['Spec','Open Responses']], links:[['Open Responses','https://github.com/openresponses/openresponses']] },
+  al_validator: { t:'request-validator', d:'Format-aware validation for Responses API input, tools, and conversation parameters. Writes validated parameters into the request context.', dt:[['Validates','model, input, tools, tool_choice, stream, background'],['Context set','request_format, validated_params, has_tools']] },
+  al_conv_mgr: { t:'conversation-manager', d:'Loads and saves conversation state from the Conversation Store — a terminal resource service. Load at intake, persist at completion.', dt:[['on_request','load conversation items + stored messages'],['on_response','save input + output items'],['Store','terminal resource (OGX-behind-Praxis pattern)']] },
+  al_tool_reg: { t:'tool-registry (MCP discovery)', d:'Resolves and registers available tools. Connects to MCP servers for discovery, applies allowed_tools filtering, stores the resolved tool map in the request context.', dt:[['Tool types','function, mcp, web_search, file_search, custom'],['Discovery','MCP list_tools, cached per session']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  al_subreq: { t:'pipeline subrequest', d:'The composition guarantee in action: each inference attempt is a subrequest that re-enters the filter pipeline in-process. Policy, translation, guardrails, and credentials apply to every iteration — nothing skips the pipeline, and nothing exits through the gateway.', dt:[['Re-enters','filter pipeline (in-process, steer-to-self)'],['Inherits','identity, quotas, metering, audit'],['Replaces','nested calls bouncing through Envoy/IPP with policy skipped']] },
+  al_tool_handler: { t:'tool-call-handler', d:'Detects, classifies, and routes tool calls from model output. Server-side tools fan out to executors; function tools yield to the client.', dt:[['Routing','server-side → executors · function → yield'],['Context set','tool_routing[], has_server_side_tools']] },
+  al_loop_ctrl: { t:'loop-controller', d:'Evaluates loop state against the session budget tree and signals continue or stop. Whole-session enforcement: token budgets and cost attribution cover every iteration and tool call.', dt:[['Signals','continue, stop_completed, stop_incomplete, stop_yield'],['Limits','max_tool_calls, max_output_tokens, budget tree'],['Usage','accumulated across all iterations — visible to policy']] },
+  al_srv_exec: { t:'server-tool-executor', d:'Executes internally-hosted tools via config-driven dispatch. Tool backends are terminal services.', dt:[['Tools','file_search, web_search, code_interpreter, custom'],['Dispatch','config-driven backend per tool type']] },
+  al_mcp_exec: { t:'mcp-executor', d:'Orchestrates calls to external MCP servers, reusing the discovery session. MCP tool-call traffic runs through the Praxis pipeline; supports the approval flow for per-action authorization.', dt:[['Session','reused from tool-registry discovery'],['Approval','mcp_approval_request → client review → response'],['Governance','per-action authorization on the identity spine']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  al_assembler: { t:'response-assembler', d:'Builds the final ResponseResource: output items, accumulated usage from the budget tree, and echo-back fields.', dt:[['Output','ResponseResource, object="response"'],['Usage','one total across all iterations and tool calls']] },
+  al_store: { t:'response-store', d:'Persists the response when store=true, retrievable via GET /v1/responses/{id} and referenceable via previous_response_id.', dt:[['Condition','store=true'],['Store','terminal resource service']] },
+  sched: { t:'llm-d EPP — Endpoint Picker', d:'The placement layer. Praxis consults the EPP per attempt over the standard full-duplex contract — Praxis is the client, not an Envoy ext_proc chain. KV-cache-aware pod selection; on failure, re-consulted with fresh context.', dt:[['Contract','standard EPP full-duplex, Praxis as client'],['Metrics','KV cache utilization, queue depth, model affinity'],['Granularity','pod'],['Unchanged','nothing forks — EPP remains the placement authority']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
+  epp: { t:'llm-d EPP · placement layer', d:'One routing authority per layer: gateway at route granularity, Praxis at request granularity, EPP at pod granularity. Each layer decides only what it can see.', dt:[['Layer','placement (pod granularity)'],['Consulted','per attempt, with fresh context on failure']], links:[['llm-d','https://github.com/llm-d']] },
+  anthropic: { t:'Anthropic', d:'External model provider — a terminal backend. Praxis egresses directly with injected provider credentials; responses stream back through the pipeline as translated bytes. External providers no longer require a bounce through the front door.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Egress','direct from Praxis, credentials injected'],['Terminal','serves requests — does not route']] },
+  maas: { t:'MaaS — definition layer', d:'MaaS defines the user-facing policy model: API keys, subscriptions, quotas, and model offerings. The pipeline consumes MaaS-managed configuration as its single source of truth — one config authority, nothing independently declared.', dt:[['Defines','keys, subscriptions, quotas, model catalog'],['Consumed by','identity, resolution, and policy filters'],['Fixes','configuration drift between duplicate authorities']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
+  svc_guardrails: { t:'NeMo Guardrails (engine)', d:'Guardrails engine — a terminal service called by the guardrails filter. The engines are the capability; the pipeline is where enforcement finally composes.', dt:[['Called by','guardrails filter (all paths)'],['Terminal','serves evaluations — does not route']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
+  svc_files: { t:'File Service (S3 / Vector Store)', d:'Terminal resource service for file_search. Real backends (S3, vector databases) sit behind Praxis with forwarded identity, tenant, and scope.', dt:[['Called by','server-tool-executor'],['Pattern','resource APIs behind Praxis (OGX split)']], links:[['Open Responses','https://github.com/openresponses/openresponses']] },
+  svc_websearch: { t:'Web Search', d:'Web search backend for the web_search tool. Terminal service; returns unsupported-tool error until configured.', dt:[['Status','Coming Soon'],['Called by','server-tool-executor']] },
+  svc_mcp: { t:'MCP Server', d:'External MCP server. Discovery and invocation both transit the Praxis pipeline on the same identity spine — per-action authorization and unified audit apply.', dt:[['Called by','tool-registry (discovery) + mcp-executor (invocation)'],['Protocol','MCP over SSE or stdio']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  svc_conv: { t:'Conversation Store', d:'Terminal storage for conversation state — items for UI metadata, raw messages for inference context.', dt:[['Called by','conversation-manager'],['Terminal','serves storage — does not route']] },
+  svc_resp_store: { t:'Response Store', d:'Terminal SQL persistence for response objects; supports background processing and previous_response_id continuation.', dt:[['Called by','response-store'],['Retrieval','GET /v1/responses/{id}']] },
+  sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction between the prefill and decode workers.', dt:[['Role','transaction coordinator'],['Triggers','KVXfer metadata exchange']] },
+  prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the prompt and generates the initial KV cache; returns KVXfer metadata for the decode pod to pull via NIXL.', dt:[['Engine','vLLM'],['Output','KVXfer metadata']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
+  decode: { t:'Decode Pod A (vLLM)', d:'Generates output tokens auto-regressively using KV cache pulled from prefill via NIXL. Streams tokens back to Praxis as relayed bytes.', dt:[['Engine','vLLM'],['Input','KV cache via NIXL pull']], links:[['vLLM','https://github.com/vllm-project/vllm']] },
+  nixl: { t:'NIXL — KV Transfer', d:'High-speed KV cache transfer between prefill and decode pods over GPU-direct RDMA.', dt:[['Transport','GPU-direct RDMA, DCN'],['Direction','decode pulls from prefill']], links:[['NIXL Repo','https://github.com/ai-dynamo/nixl']] },
 };
+
 
 let overlayWasRunning = false, highlightKey = null;
 function showOverlay(key) {
@@ -531,56 +513,18 @@ function drawBounds() {
   ctx.textAlign = 'right';
   ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
 
-  // AI Gateway boundary
-  drawContainer('aigw', false);
-  // IPP container
-  drawContainer('ipp', glowing.has('ipp'));
-  // Agentic Loop container
+  // Praxis pod, pipeline, loop, EPP containers
+  drawContainer('praxis', glowing.has('praxis'));
+  drawContainer('fp', glowing.has('fp'));
   drawContainer('al', glowing.has('al'));
-  // EPP container (llm-d Scheduler)
   drawContainer('epp', glowing.has('epp'));
-
-  // IPP request/response plugin sections
-  if (N.ipp) {
-    ctx.save();
-    // Request plugins section
-    ctx.beginPath();
-    ctx.roundRect(tx(758), ty(300), ts(345), ts(385), ts(8));
-    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = `bold ${ts(10)}px system-ui`;
-    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
-    ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(770), ty(312));
-
-    // Response plugins section
-    ctx.beginPath();
-    ctx.roundRect(tx(758), ty(695), ts(345), ts(110), ts(8));
-    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = `bold ${ts(10)}px system-ui`;
-    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
-    ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(770), ty(710));
-    ctx.restore();
-  }
 
   // Agentic Loop plugin sections
   if (N.al) {
     ctx.save();
-    // Intake plugins section (3 nodes: validator, conv_mgr, tool_reg)
+    // Intake section
     ctx.beginPath();
-    ctx.roundRect(tx(183), ty(395), ts(515), ts(100), ts(8));
+    ctx.roundRect(tx(183), ty(252), ts(515), ts(103), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -591,11 +535,11 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(195), ty(405));
+    ctx.fillText('Intake →', tx(195), ty(262));
 
-    // Loop plugins section (7 nodes: guardrails → mcp_exec)
+    // Loop section
     ctx.beginPath();
-    ctx.roundRect(tx(183), ty(495), ts(515), ts(205), ts(8));
+    ctx.roundRect(tx(183), ty(358), ts(515), ts(150), ts(8));
     ctx.fillStyle = isDark ? '#d2a8ff06' : '#d2a8ff05';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#d2a8ff25' : '#d2a8ff20';
@@ -605,12 +549,11 @@ function drawBounds() {
     ctx.setLineDash([]);
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#d2a8ff88' : '#d2a8ff99';
-    ctx.textAlign = 'left';
-    ctx.fillText('⟳ Loop Plugins', tx(195), ty(497));
+    ctx.fillText('⟳ Loop — subrequests re-enter the pipeline', tx(195), ty(361));
 
-    // Completion plugins section (2 nodes: assembler, store)
+    // Completion section
     ctx.beginPath();
-    ctx.roundRect(tx(183), ty(700), ts(515), ts(64), ts(8));
+    ctx.roundRect(tx(183), ty(511), ts(515), ts(70), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -620,10 +563,25 @@ function drawBounds() {
     ctx.setLineDash([]);
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
-    ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(195), ty(702));
+    ctx.fillText('← Completion', tx(195), ty(514));
     ctx.restore();
   }
+
+  // Pipeline order hint
+  ctx.save();
+  ctx.font = `bold ${ts(10)}px system-ui`;
+  ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
+  ctx.textAlign = 'left';
+  ctx.fillText('one ordered pipeline ↓ · streams pass back through ↑', tx(765), ty(258));
+  ctx.restore();
+
+  // Terminal row caption
+  ctx.save();
+  ctx.font = `italic ${ts(12)}px system-ui`;
+  ctx.fillStyle = c.dim;
+  ctx.textAlign = 'left';
+  ctx.fillText("terminal: they serve, they don't route", tx(680), ty(742));
+  ctx.restore();
 
   // InferencePool boundary
   const ip = N.pool;
@@ -683,6 +641,7 @@ function drawBounds() {
   }
   ctx.restore();
 }
+
 
 function edgePt(n, targetX, targetY, yOff) {
   const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
@@ -1058,7 +1017,7 @@ function initInspector() {
     }
   } else {
     inspHeaders = [
-      { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep', id: 'h-path' },
+      { v: 'POST /v1/chat/completions', s: 'keep', id: 'h-path' },
       { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep', id: 'h-auth' },
       { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
     ];
@@ -1068,6 +1027,7 @@ function initInspector() {
       { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
       { v: '"stream": false', s: 'keep', id: 'b-stream' },
     ];
+    if (activeFlow === 'inc') inspBody[0].v = '"model": "llama-3.1-8b"';
   }
   inspCycle = [];
   inspStepLabel = 'Initial Request';
@@ -1082,7 +1042,7 @@ function renderInsp() {
   h += '<div class="insp-sec">Body:</div>';
   inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   if (inspCycle.length) {
-    h += '<div class="insp-sec">CycleState:</div>';
+    h += '<div class="insp-sec">Request Context:</div>';
     inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   }
   el.innerHTML = h;
@@ -1094,1116 +1054,23 @@ function resetStyles() {
   inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
 }
 
-function inspStepAuth(stepNum) {
-  switch (stepNum) {
-    case 5:
-      inspStepLabel = '⑤ MaaS API responds: key INVALID';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
-      inspBody = [
-        { v: '"valid": false', s: 'add', id: 'b-valid' },
-        { v: '"error": "invalid_api_key"', s: 'add', id: 'b-err' },
-      ];
-      break;
-    case 6:
-      inspStepLabel = '⑥ Auth REJECTS request';
-      break;
-    case 7:
-      inspStepLabel = '⑦ IPP → Gateway (auth failed)';
-      setInspPhase('error');
-      inspHeaders = [
-        { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
-      inspBody = [
-        { v: '"error": "invalid_api_key"', s: 'err', id: 'r-err' },
-        { v: '"message": "API key is not valid"', s: 'err', id: 'r-msg' },
-      ];
-      inspCycle = [];
-      break;
-    case 8: {
-      inspStepLabel = '⑧ 401 Unauthorized → Client';
-      const st = inspHeaders.find(l => l.id === 'r-status');
-      if (st) st.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStepRL(stepNum) {
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = '⑦ Limitador: quota EXCEEDED';
-      break;
-    case 8:
-      inspStepLabel = '⑧ IPP → Gateway (rate limited)';
-      setInspPhase('error');
-      inspHeaders = [
-        { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-        { v: 'Retry-After: 60', s: 'err', id: 'r-retry' },
-      ];
-      inspBody = [
-        { v: '"error": "rate_limited"', s: 'err', id: 'r-err' },
-        { v: '"message": "Token quota exceeded"', s: 'err', id: 'r-msg' },
-        { v: '"retry_after": 60', s: 'err', id: 'r-ra' },
-      ];
-      inspCycle = [];
-      break;
-    case 9: {
-      inspStepLabel = '⑨ 429 Too Many Requests → Client';
-      const st = inspHeaders.find(l => l.id === 'r-status');
-      if (st) st.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStepInc(stepNum) {
-  switch (stepNum) {
-    case 9:
-      inspStepLabel = '⑨ model-provider-resolver (InferencePool)';
-      inspCycle = [
-        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
-        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
-      ];
-      break;
-    case 10:
-      inspStepLabel = '⑩ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
-      break;
-    case 11:
-      inspStepLabel = '⑪ base-model-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Base-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xbase' });
-      break;
-    case 12: {
-      inspStepLabel = '⑫ IPP → Gateway (request ready)';
-      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
-      if (xm) xm.s = 'highlight';
-      const xb = inspHeaders.find(l => l.id === 'h-xbase');
-      if (xb) xb.s = 'highlight';
-      break; }
-    case 13:
-      inspStepLabel = '⑬ Gateway → EPP (ext_proc)';
-      break;
-    case 14:
-      inspStepLabel = '⑭ EPP selects P/D workers';
-      break;
-    case 15:
-      inspStepLabel = '⑮ EPP → Gateway (pods selected)';
-      break;
-    case 16:
-      inspStepLabel = '⑯ Gateway → Sidecar';
-      break;
-    case 17:
-      inspStepLabel = '⑰ Sidecar coordinates P/D';
-      break;
-    case 18:
-      inspStepLabel = '⑱ Sidecar → Prefill Pod B';
-      break;
-    case 19:
-      inspStepLabel = '⑲ Prefill processing';
-      break;
-    case 20:
-      inspStepLabel = '⑳ Prefill → Sidecar (KV metadata ready)';
-      break;
-    case 21:
-      inspStepLabel = '㉑ Sidecar → Decode Pod A';
-      break;
-    case 22:
-      inspStepLabel = '㉒ Decode requests KVs via NIXL';
-      break;
-    case 23:
-      inspStepLabel = '㉓ NIXL returns KV cache (RDMA)';
-      break;
-    case 24:
-      inspStepLabel = '㉔ Decode → Gateway (response)';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
-      inspBody = [
-        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
-        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
-        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
-        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
-      ];
-      inspCycle = [];
-      break;
-    case 25:
-      inspStepLabel = '㉕ Gateway → EPP (response)';
-      break;
-    case 26:
-      inspStepLabel = '㉖ EPP response plugins';
-      break;
-    case 27:
-      inspStepLabel = '㉗ EPP → Gateway (response)';
-      break;
-    case 28:
-      inspStepLabel = '㉘ Gateway → IPP (response)';
-      break;
-    case 29:
-      inspStepLabel = '㉙ guardrails (response)';
-      break;
-    case 30: {
-      inspStepLabel = '㉚ IPP → Gateway (response)';
-      const ro = inspBody.find(l => l.id === 'r-obj');
-      if (ro) ro.s = 'highlight';
-      break; }
-    case 31: {
-      inspStepLabel = '㉛ IPP reads usage.total_tokens';
-      const u = inspBody.find(l => l.id === 'r-usage2');
-      if (u) u.s = 'highlight';
-      break; }
-    case 32:
-      inspStepLabel = '㉜ Limitador: report token count';
-      break;
-    case 33: {
-      inspStepLabel = '㉝ Response to Client (OpenAI format)';
-      const rc = inspBody.find(l => l.id === 'r-choices');
-      if (rc) rc.s = 'highlight';
-      break; }
-  }
-}
-
-// Shared inspector helper for the 22-step IPP sub-flow
-function inspInferSubflow(stepNum, base) {
-  const off = stepNum - base;
-  if (off < 0 || off > 21) return false;
-  const labels = [
-    'inference-caller → Gateway',
-    'Gateway → IPP (nested inference)',
-    'Auth — skipped (authenticated at intake)',
-    'MaaS API — skipped',
-    'MaaS API — skipped',
-    'Rate Limit — skipped (checked at intake)',
-    'guardrails — skipped (no history context in IPP)',
-    'intelligent-model-selection — skipped (invariant)',
-    'model-provider-resolver — skipped (resolved at intake)',
-    'body-field-to-header — skipped (invariant)',
-    'api-translation: OpenAI → Anthropic format',
-    'apikey-injection — skipped (credential cached)',
-    'IPP → Gateway (mutated request)',
-    'Gateway → Anthropic',
-    'Anthropic responds',
-    'Gateway → IPP (response processing)',
-    'api-translation: Anthropic → OpenAI response',
-    'guardrails — skipped (done in agentic loop)',
-    'IPP → Gateway (translated response)',
-    'Rate Limit reads usage.total_tokens',
-    'Rate Limit reports token count',
-    'Gateway → Agentic Loop (model response)',
-  ];
-  inspStepLabel = cn(stepNum) + ' ' + labels[off];
-  return true;
-}
-
-function inspStepRespSimple(stepNum) {
-  if (inspInferSubflow(stepNum, 11)) {
-    if (stepNum === 11) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
-    if (stepNum === 25) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"text","text":"Transformers..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
-      break;
-    case 8:
-      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
-      break;
-    case 9:
-      inspStepLabel = cn(9) + ' request-validator';
-      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = false', s: 'add', id: 'c-tools' }];
-      break;
-    case 10:
-      inspStepLabel = cn(10) + ' api-translation (request)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspBody = [{ v: '"messages": [{"role":"user","content":"Explain..."}]', s: 'add', id: 'b-msgs' }];
-      break;
-    case 33:
-      inspStepLabel = cn(33) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [{"type":"message","content":"Transformers..."}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = []', s: 'add', id: 'c-routing' }];
-      break;
-    case 34:
-      inspStepLabel = cn(34) + ' loop-controller: stop_completed';
-      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
-      break;
-    case 35:
-      inspStepLabel = cn(35) + ' response-assembler';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Transformers..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":12,"output_tokens":85}', s: 'add', id: 'r-usage' }];
-      inspCycle = [];
-      break;
-    case 36:
-      inspStepLabel = cn(36) + ' response-store: persist';
-      inspBody.push({ v: '"id": "resp_abc123"', s: 'add', id: 'r-id' });
-      break;
-    case 37:
-      inspStepLabel = cn(37) + ' response-store → Response Store';
-      break;
-    case 38:
-      inspStepLabel = cn(38) + ' Response Store → response-store';
-      break;
-    case 39: {
-      inspStepLabel = cn(39) + ' Agentic Loop → Gateway';
-      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
-      break; }
-    case 40: {
-      inspStepLabel = cn(40) + ' Response to client (Responses API)';
-      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStepRespRag(stepNum) {
-  if (inspInferSubflow(stepNum, 15)) {
-    if (stepNum === 15) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
-    if (stepNum === 29) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"tool_use","name":"file_search",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  if (inspInferSubflow(stepNum, 44)) {
-    if (stepNum === 44) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
-    if (stepNum === 58) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"text","text":"Based on Q4 docs..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
-      break;
-    case 8:
-      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
-      break;
-    case 9:
-      inspStepLabel = cn(9) + ' request-validator';
-      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'has_conversation = true', s: 'add', id: 'c-conv' }];
-      break;
-    case 10:
-      inspStepLabel = cn(10) + ' conversation-manager: load';
-      inspCycle.push({ v: 'conversation_items = [...]', s: 'add', id: 'c-items' });
-      inspCycle.push({ v: 'stored_messages = [...]', s: 'add', id: 'c-msgs' });
-      break;
-    case 11:
-      inspStepLabel = cn(11) + ' conversation-manager → Conversation Store';
-      break;
-    case 12:
-      inspStepLabel = cn(12) + ' Conversation Store → conversation-manager';
-      break;
-    case 13:
-      inspStepLabel = cn(13) + ' tool-registry: file_search';
-      inspCycle.push({ v: 'tools = [{type:"file_search",vs_ids:[...]}]', s: 'add', id: 'c-treg' });
-      break;
-    case 14:
-      inspStepLabel = cn(14) + ' api-translation (request)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
-      inspBody = [{ v: '"messages": [{conv_history},{user_input}]', s: 'add', id: 'b-msgs' }, { v: '"tools": [{"name":"file_search",...}]', s: 'add', id: 'b-tdef' }];
-      break;
-    case 37:
-      inspStepLabel = cn(37) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [{"type":"file_search_call",...}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [{type:"file_search"}]', s: 'add', id: 'c-routing' }];
-      break;
-    case 38:
-      inspStepLabel = cn(38) + ' tool-call-handler: file_search';
-      { const rt = inspCycle.find(l => l.id === 'c-routing'); if (rt) rt.s = 'highlight'; }
-      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
-      break;
-    case 39:
-      inspStepLabel = cn(39) + ' loop-controller: continue';
-      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
-      break;
-    case 40:
-      inspStepLabel = cn(40) + ' server-tool-executor: file_search';
-      inspBody = [{ v: '"output": [{"type":"file_search_call",...}]', s: 'keep', id: 'b-output' }, { v: '"file_search_result": {chunks:[...],citations:[...]}', s: 'add', id: 'b-fs-result' }];
-      break;
-    case 41:
-      inspStepLabel = cn(41) + ' server-tool-executor → File Service';
-      break;
-    case 42:
-      inspStepLabel = cn(42) + ' File Service → server-tool-executor';
-      break;
-    case 43:
-      inspStepLabel = cn(43) + ' ⟳ Loop back: api-translation (request)';
-      inspBody = [{ v: '"messages": [{...},{file_search_result},{...}]', s: 'add', id: 'b-msgs2' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 1', s: 'add', id: 'c-tc' }];
-      break;
-    case 66:
-      inspStepLabel = cn(66) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [{"type":"message","content":"Q4 results..."}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
-      break;
-    case 67:
-      inspStepLabel = cn(67) + ' tool-call-handler: no tool calls';
-      break;
-    case 68:
-      inspStepLabel = cn(68) + ' loop-controller: stop_completed';
-      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
-      break;
-    case 69:
-      inspStepLabel = cn(69) + ' response-assembler';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Q4 results..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":120,"output_tokens":65}', s: 'add', id: 'r-usage' }];
-      inspCycle = [];
-      break;
-    case 70:
-      inspStepLabel = cn(70) + ' response-store: persist';
-      inspBody.push({ v: '"id": "resp_rag456"', s: 'add', id: 'r-id' });
-      break;
-    case 71:
-      inspStepLabel = cn(71) + ' response-store → Response Store';
-      break;
-    case 72:
-      inspStepLabel = cn(72) + ' Response Store → response-store';
-      break;
-    case 73:
-      inspStepLabel = cn(73) + ' conversation-manager: save';
-      inspBody.push({ v: '"conversation": "my-session-001"', s: 'add', id: 'r-conv' });
-      break;
-    case 74:
-      inspStepLabel = cn(74) + ' conversation-manager → Conversation Store';
-      break;
-    case 75:
-      inspStepLabel = cn(75) + ' Conversation Store → conversation-manager';
-      break;
-    case 76: {
-      inspStepLabel = cn(76) + ' Agentic Loop → Gateway';
-      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
-      break; }
-    case 77: {
-      inspStepLabel = cn(77) + ' Response to client (Responses API)';
-      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStepRespMcp(stepNum) {
-  if (inspInferSubflow(stepNum, 14)) {
-    if (stepNum === 14) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
-    if (stepNum === 28) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"tool_use","name":"get_weather",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  if (inspInferSubflow(stepNum, 43)) {
-    if (stepNum === 43) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
-    if (stepNum === 57) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"text","text":"It\'s 72F and sunny..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
-      break;
-    case 8:
-      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
-      break;
-    case 9:
-      inspStepLabel = cn(9) + ' request-validator';
-      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'is_streaming = true', s: 'add', id: 'c-stream' }];
-      break;
-    case 10:
-      inspStepLabel = cn(10) + ' tool-registry: MCP discovery';
-      inspCycle.push({ v: 'mcp_tools = ["get_weather","get_forecast"]', s: 'add', id: 'c-mcp' });
-      break;
-    case 11:
-      inspStepLabel = cn(11) + ' tool-registry → MCP Server (discovery)';
-      break;
-    case 12:
-      inspStepLabel = cn(12) + ' MCP Server → tool-registry';
-      break;
-    case 13:
-      inspStepLabel = cn(13) + ' api-translation (request)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
-      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
-      inspBody.find(l => l.id === 'b-input').s = 'del';
-      inspBody.push({ v: '"messages": [{"role":"user","content":"Find weather"}]', s: 'add', id: 'b-msgs' });
-      break;
-    case 36:
-      inspStepLabel = cn(36) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [{"type":"mcp_call","name":"get_weather",...}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [{type:"mcp",name:"get_weather"}]', s: 'add', id: 'c-routing' }];
-      break;
-    case 37:
-      inspStepLabel = cn(37) + ' tool-call-handler: MCP tool detected';
-      { const rt = inspCycle.find(l => l.id === 'c-routing'); if (rt) rt.s = 'highlight'; }
-      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
-      break;
-    case 38:
-      inspStepLabel = cn(38) + ' loop-controller: continue';
-      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
-      break;
-    case 39:
-      inspStepLabel = cn(39) + ' mcp-executor: execute MCP tool';
-      inspBody = [{ v: '"output": [{"type":"mcp_call","name":"get_weather",...}]', s: 'keep', id: 'b-output' }, { v: '"mcp_result": {"temp":"72F","condition":"sunny"}', s: 'add', id: 'b-mcp-result' }];
-      { const ca = inspCycle.find(l => l.id === 'c-action'); if (ca) ca.s = 'highlight'; }
-      break;
-    case 40:
-      inspStepLabel = cn(40) + ' mcp-executor → MCP Server';
-      break;
-    case 41:
-      inspStepLabel = cn(41) + ' MCP Server → mcp-executor';
-      break;
-    case 42:
-      inspStepLabel = cn(42) + ' ⟳ Loop back: api-translation (request)';
-      inspBody = [{ v: '"messages": [{...},{tool_result},{...}]', s: 'add', id: 'b-msgs2' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 1', s: 'add', id: 'c-tc' }];
-      break;
-    case 65:
-      inspStepLabel = cn(65) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [{"type":"message","content":"72F, sunny"}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
-      break;
-    case 66:
-      inspStepLabel = cn(66) + ' tool-call-handler: no tool calls';
-      break;
-    case 67:
-      inspStepLabel = cn(67) + ' loop-controller: stop_completed';
-      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
-      break;
-    case 68:
-      inspStepLabel = cn(68) + ' response-assembler';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"72F, sunny"}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":45,"output_tokens":18}', s: 'add', id: 'r-usage' }];
-      inspCycle = [];
-      break;
-    case 69:
-      inspStepLabel = cn(69) + ' response-store: persist';
-      inspBody.push({ v: '"id": "resp_abc123"', s: 'add', id: 'r-id' });
-      break;
-    case 70:
-      inspStepLabel = cn(70) + ' response-store → Response Store';
-      break;
-    case 71:
-      inspStepLabel = cn(71) + ' Response Store → response-store';
-      break;
-    case 72: {
-      inspStepLabel = cn(72) + ' Agentic Loop → Gateway';
-      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
-      break; }
-    case 73: {
-      inspStepLabel = cn(73) + ' Response to client (Responses API)';
-      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStepRespBg(stepNum) {
-  if (inspInferSubflow(stepNum, 19)) {
-    if (stepNum === 19) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
-    if (stepNum === 33) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"tool_use","name":"file_search"},{"type":"tool_use","name":"mcp_tool"}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  if (inspInferSubflow(stepNum, 50)) {
-    if (stepNum === 50) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
-    if (stepNum === 64) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"text","text":"Analysis complete..."}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
-      break;
-    case 8:
-      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
-      break;
-    case 9:
-      inspStepLabel = cn(9) + ' request-validator';
-      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'is_background = true', s: 'add', id: 'c-bg' }];
-      break;
-    case 10:
-      inspStepLabel = cn(10) + ' tool-registry: file_search + MCP';
-      inspCycle.push({ v: 'tools = [file_search, mcp]', s: 'add', id: 'c-treg' });
-      break;
-    case 11:
-      inspStepLabel = cn(11) + ' tool-registry → MCP Server (discovery)';
-      break;
-    case 12:
-      inspStepLabel = cn(12) + ' MCP Server → tool-registry';
-      break;
-    case 13:
-      inspStepLabel = cn(13) + ' response-store: queue response';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "queued"', s: 'add', id: 'r-stat' }, { v: '"id": "resp_bg789"', s: 'add', id: 'r-id' }];
-      inspCycle = [];
-      break;
-    case 14:
-      inspStepLabel = cn(14) + ' response-store → Response Store (queue)';
-      break;
-    case 15:
-      inspStepLabel = cn(15) + ' Response Store → response-store';
-      break;
-    case 16: {
-      inspStepLabel = cn(16) + ' Agentic Loop → Gateway (queued)';
-      const rs = inspBody.find(l => l.id === 'r-stat'); if (rs) rs.s = 'highlight';
-      break; }
-    case 17: {
-      inspStepLabel = cn(17) + ' Client receives queued response';
-      const rid = inspBody.find(l => l.id === 'r-id'); if (rid) rid.s = 'highlight';
-      break; }
-    case 18:
-      inspStepLabel = cn(18) + ' [async] api-translation (request)';
-      setInspPhase('request');
-      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }, { v: 'POST /v1/messages', s: 'add', id: 'h-path2' }];
-      inspBody = [{ v: '"messages": [{"role":"user","content":"Analyze Q4"}]', s: 'add', id: 'b-msgs' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'add', id: 'c-iter' }, { v: 'is_background = true', s: 'keep', id: 'c-bg' }];
-      break;
-    case 41:
-      inspStepLabel = cn(41) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }];
-      inspBody = [{ v: '"output": [file_search_call, mcp_call]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [file_search, mcp]', s: 'add', id: 'c-routing' }];
-      break;
-    case 42:
-      inspStepLabel = cn(42) + ' tool-call-handler: tools detected';
-      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
-      break;
-    case 43:
-      inspStepLabel = cn(43) + ' server-tool-executor: file_search';
-      inspBody = [{ v: '"file_search_result": {chunks:[...]}', s: 'add', id: 'b-fs' }];
-      break;
-    case 44:
-      inspStepLabel = cn(44) + ' server-tool-executor → File Service';
-      break;
-    case 45:
-      inspStepLabel = cn(45) + ' File Service → server-tool-executor';
-      break;
-    case 46:
-      inspStepLabel = cn(46) + ' mcp-executor: MCP tool';
-      inspBody.push({ v: '"mcp_result": {"data":"..."}', s: 'add', id: 'b-mcp' });
-      break;
-    case 47:
-      inspStepLabel = cn(47) + ' mcp-executor → MCP Server';
-      break;
-    case 48:
-      inspStepLabel = cn(48) + ' MCP Server → mcp-executor';
-      break;
-    case 49:
-      inspStepLabel = cn(49) + ' ⟳ Loop back: api-translation (request)';
-      inspBody = [{ v: '"messages": [{...},{tool_results},{...}]', s: 'add', id: 'b-msgs2' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 2', s: 'add', id: 'c-tc' }];
-      break;
-    case 72:
-      inspStepLabel = cn(72) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: '[async worker processing]', s: 'keep', id: 'h-async' }];
-      inspBody = [{ v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'tool_routing = []', s: 'add', id: 'c-empty' }];
-      break;
-    case 73:
-      inspStepLabel = cn(73) + ' loop-controller: stop_completed';
-      inspCycle.push({ v: 'loop_action = "stop_completed"', s: 'add', id: 'c-stop' });
-      break;
-    case 74:
-      inspStepLabel = cn(74) + ' response-assembler';
-      setInspPhase('response');
-      inspHeaders = [{ v: '[stored response updated]', s: 'keep', id: 'r-async' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":200,"output_tokens":120}', s: 'add', id: 'r-usage' }];
-      inspCycle = [];
-      break;
-    case 75:
-      inspStepLabel = cn(75) + ' response-store: update stored response';
-      inspBody.push({ v: '"id": "resp_bg789"', s: 'add', id: 'r-id' });
-      break;
-    case 76:
-      inspStepLabel = cn(76) + ' response-store → Response Store (update)';
-      break;
-    case 77:
-      inspStepLabel = cn(77) + ' Response Store → response-store';
-      break;
-    case 78:
-      inspStepLabel = cn(78) + ' Client polls: GET /v1/responses/{id}';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'GET /v1/responses/resp_bg789', s: 'add', id: 'h-poll' }, { v: 'Authorization: Bearer sk-oai-abc123...', s: 'add', id: 'h-auth' }];
-      inspBody = [];
-      break;
-    case 79:
-      inspStepLabel = cn(79) + ' Gateway → Client: completed response';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'keep', id: 'r-obj' }, { v: '"status": "completed"', s: 'highlight', id: 'r-stat' }, { v: '"output": [{"type":"message","content":"Analysis..."}]', s: 'keep', id: 'r-output' }];
-      break;
-  }
-}
-
-function inspStepRespFull(stepNum) {
-  if (inspInferSubflow(stepNum, 20)) {
-    if (stepNum === 20) inspCycle.push({ v: 'iteration = 1', s: 'add', id: 'c-iter' });
-    if (stepNum === 34) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [tool_use:file_search, tool_use:mcp, tool_use:function]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  if (inspInferSubflow(stepNum, 55)) {
-    if (stepNum === 55) inspCycle.push({ v: 'iteration = 2', s: 'add', id: 'c-iter2' });
-    if (stepNum === 69) {
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"content": [{"type":"tool_use","name":"get_weather",...}]', s: 'keep', id: 'r-content' }, { v: '"stop_reason": "tool_use"', s: 'keep', id: 'r-stop' }];
-    }
-    return;
-  }
-  switch (stepNum) {
-    case 7:
-      inspStepLabel = cn(7) + ' IPP → Gateway (routes to Agentic Loop)';
-      break;
-    case 8:
-      inspStepLabel = cn(8) + ' Gateway → Agentic Loop';
-      break;
-    case 9:
-      inspStepLabel = cn(9) + ' request-validator';
-      inspCycle = [{ v: 'validated_params = {...}', s: 'add', id: 'c-params' }, { v: 'has_tools = true', s: 'add', id: 'c-tools' }, { v: 'has_conversation = true', s: 'add', id: 'c-conv' }, { v: 'is_streaming = true', s: 'add', id: 'c-stream' }];
-      break;
-    case 10:
-      inspStepLabel = cn(10) + ' conversation-manager: load';
-      inspCycle.push({ v: 'conversation_items = [...]', s: 'add', id: 'c-items' });
-      break;
-    case 11:
-      inspStepLabel = cn(11) + ' conversation-manager → Conversation Store';
-      break;
-    case 12:
-      inspStepLabel = cn(12) + ' Conversation Store → conversation-manager';
-      break;
-    case 13:
-      inspStepLabel = cn(13) + ' tool-registry: all tools';
-      inspCycle.push({ v: 'tools = [file_search, mcp, function]', s: 'add', id: 'c-treg' });
-      break;
-    case 14:
-      inspStepLabel = cn(14) + ' tool-registry → MCP Server (discovery)';
-      break;
-    case 15:
-      inspStepLabel = cn(15) + ' MCP Server → tool-registry';
-      break;
-    case 16:
-      inspStepLabel = cn(16) + ' guardrails: input check';
-      inspCycle.push({ v: 'guardrails_input = "pass"', s: 'add', id: 'c-gin' });
-      break;
-    case 17:
-      inspStepLabel = cn(17) + ' guardrails → NeMo Guardrails (input)';
-      break;
-    case 18:
-      inspStepLabel = cn(18) + ' NeMo Guardrails → guardrails';
-      break;
-    case 19:
-      inspStepLabel = cn(19) + ' api-translation (request)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
-      inspBody = [{ v: '"messages": [{conv},{user_input}]', s: 'add', id: 'b-msgs' }, { v: '"tools": [file_search, mcp_tools, function]', s: 'add', id: 'b-tdef' }];
-      break;
-    case 42:
-      inspStepLabel = cn(42) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [file_search_call, mcp_call, function_call]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 1', s: 'keep', id: 'c-iter' }, { v: 'tool_routing = [file_search, mcp, function]', s: 'add', id: 'c-routing' }];
-      break;
-    case 43:
-      inspStepLabel = cn(43) + ' guardrails: output check';
-      inspCycle.push({ v: 'guardrails_output = "pass"', s: 'add', id: 'c-gout' });
-      break;
-    case 44:
-      inspStepLabel = cn(44) + ' guardrails → NeMo Guardrails (output)';
-      break;
-    case 45:
-      inspStepLabel = cn(45) + ' NeMo Guardrails → guardrails';
-      break;
-    case 46:
-      inspStepLabel = cn(46) + ' tool-call-handler: mixed tools';
-      inspCycle.push({ v: 'has_server_side_tools = true', s: 'add', id: 'c-sst' });
-      inspCycle.push({ v: 'has_function_tools = true', s: 'add', id: 'c-ft' });
-      break;
-    case 47:
-      inspStepLabel = cn(47) + ' loop-controller: continue (server-side first)';
-      inspCycle.push({ v: 'loop_action = "continue"', s: 'add', id: 'c-action' });
-      break;
-    case 48:
-      inspStepLabel = cn(48) + ' server-tool-executor: file_search';
-      inspBody = [{ v: '"file_search_result": {chunks:[...],citations:[...]}', s: 'add', id: 'b-fs' }];
-      break;
-    case 49:
-      inspStepLabel = cn(49) + ' server-tool-executor → File Service';
-      break;
-    case 50:
-      inspStepLabel = cn(50) + ' File Service → server-tool-executor';
-      break;
-    case 51:
-      inspStepLabel = cn(51) + ' mcp-executor: MCP tool';
-      inspBody.push({ v: '"mcp_result": {"data":"..."}', s: 'add', id: 'b-mcp' });
-      break;
-    case 52:
-      inspStepLabel = cn(52) + ' mcp-executor → MCP Server';
-      break;
-    case 53:
-      inspStepLabel = cn(53) + ' MCP Server → mcp-executor';
-      break;
-    case 54:
-      inspStepLabel = cn(54) + ' ⟳ Loop back: api-translation (request)';
-      inspBody = [{ v: '"messages": [{...},{tool_results},{...}]', s: 'add', id: 'b-msgs2' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'add', id: 'c-iter2' }, { v: 'total_tool_calls = 2', s: 'add', id: 'c-tc' }];
-      break;
-    case 77:
-      inspStepLabel = cn(77) + ' api-translation (response)';
-      setInspPhase('request');
-      inspHeaders = [{ v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-path' }];
-      inspBody = [{ v: '"output": [function_call:"get_weather"]', s: 'add', id: 'b-output' }];
-      inspCycle = [{ v: 'iteration = 2', s: 'keep', id: 'c-iter2' }, { v: 'model emits function_call: get_weather', s: 'add', id: 'c-fc' }];
-      break;
-    case 78:
-      inspStepLabel = cn(78) + ' tool-call-handler: function → yield';
-      inspCycle.push({ v: 'has_function_tools = true', s: 'add', id: 'c-ft2' });
-      inspCycle.push({ v: 'has_server_side_tools = false', s: 'add', id: 'c-nosst' });
-      break;
-    case 79:
-      inspStepLabel = cn(79) + ' loop-controller: stop_yield';
-      inspCycle.push({ v: 'loop_action = "stop_yield"', s: 'add', id: 'c-yield' });
-      break;
-    case 80:
-      inspStepLabel = cn(80) + ' response-assembler: function_call in output';
-      setInspPhase('response');
-      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' }, { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' }];
-      inspBody = [{ v: '"object": "response"', s: 'add', id: 'r-obj' }, { v: '"status": "completed"', s: 'add', id: 'r-stat' }, { v: '"output": [{message},{function_call:"get_weather"}]', s: 'add', id: 'r-output' }, { v: '"usage": {"input_tokens":250,"output_tokens":40}', s: 'add', id: 'r-usage' }];
-      inspCycle = [];
-      break;
-    case 81:
-      inspStepLabel = cn(81) + ' response-store: persist';
-      inspBody.push({ v: '"id": "resp_full001"', s: 'add', id: 'r-id' });
-      break;
-    case 82:
-      inspStepLabel = cn(82) + ' response-store → Response Store';
-      break;
-    case 83:
-      inspStepLabel = cn(83) + ' Response Store → response-store';
-      break;
-    case 84:
-      inspStepLabel = cn(84) + ' conversation-manager: save';
-      inspBody.push({ v: '"conversation": "my-session-001"', s: 'add', id: 'r-conv' });
-      break;
-    case 85:
-      inspStepLabel = cn(85) + ' conversation-manager → Conversation Store';
-      break;
-    case 86:
-      inspStepLabel = cn(86) + ' Conversation Store → conversation-manager';
-      break;
-    case 87: {
-      inspStepLabel = cn(87) + ' Agentic Loop → Gateway';
-      const ro = inspBody.find(l => l.id === 'r-obj'); if (ro) ro.s = 'highlight';
-      break; }
-    case 88: {
-      inspStepLabel = cn(88) + ' Response to client (function_call)';
-      const rout = inspBody.find(l => l.id === 'r-output'); if (rout) rout.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStep(stepNum) {
-  resetStyles();
-  if (stepNum >= 5 && activeFlow === 'auth') {
-    inspStepAuth(stepNum);
-    renderInsp();
-    return;
-  }
-  if (stepNum >= 7 && activeFlow === 'rl') {
-    inspStepRL(stepNum);
-    renderInsp();
-    return;
-  }
-  if (stepNum >= 9 && activeFlow === 'inc') {
-    inspStepInc(stepNum);
-    renderInsp();
-    return;
-  }
-  if (stepNum >= 7 && activeFlow.startsWith('resp_')) {
-    switch(activeFlow) {
-      case 'resp_simple': inspStepRespSimple(stepNum); break;
-      case 'resp_rag': inspStepRespRag(stepNum); break;
-      case 'resp_mcp': inspStepRespMcp(stepNum); break;
-      case 'resp_bg': inspStepRespBg(stepNum); break;
-      case 'resp_full': inspStepRespFull(stepNum); break;
-    }
-    renderInsp();
-    return;
-  }
-  switch (stepNum) {
-    case 1:
-      inspStepLabel = '① Incoming Request';
-      break;
-    case 2:
-      inspStepLabel = '② Gateway → ext_proc (IPP)';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
-      break;
-    case 3:
-      inspStepLabel = '③ Authorino validates API key';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
-      break;
-    case 4:
-      inspStepLabel = '④ IPP → MaaS API (key validation)';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
-      break;
-    case 5:
-      inspStepLabel = '⑤ MaaS API responds: key valid';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
-      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
-      inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
-      break;
-    case 6:
-      inspStepLabel = '⑥ Limitador checks token quota';
-      break;
-    case 7:
-      inspStepLabel = '⑦ guardrails (request)';
-      break;
-    case 8:
-      inspStepLabel = '⑧ intelligent-model-selection [tbd]';
-      break;
-    case 9:
-      inspStepLabel = '⑨ model-provider-resolver';
-      inspCycle = [
-        { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
-        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
-      ];
-      break;
-    case 10:
-      inspStepLabel = '⑩ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
-      break;
-    case 11:
-      inspStepLabel = '⑪ api-translation (request)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
-      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
-      break;
-    case 12:
-      inspStepLabel = '⑫ apikey-injection';
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
-      break;
-    case 13: {
-      inspStepLabel = '⑬ IPP → Gateway (mutated request)';
-      const ph2 = inspHeaders.find(l => l.id === 'h-path2');
-      if (ph2) ph2.s = 'highlight';
-      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
-      if (xapi) xapi.s = 'highlight';
-      break; }
-    case 14:
-      inspStepLabel = '⑭ Gateway routes to Anthropic';
-      break;
-    case 15:
-      inspStepLabel = '⑮ Anthropic responds';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
-      inspBody = [
-        { v: '"type": "message"', s: 'keep', id: 'r-type' },
-        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
-        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
-        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
-      ];
-      inspCycle = [];
-      break;
-    case 16:
-      inspStepLabel = '⑯ Gateway → IPP (response)';
-      break;
-    case 17:
-      inspStepLabel = '⑰ api-translation (response)';
-      inspBody.find(l => l.id === 'r-type').s = 'del';
-      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
-      inspBody.find(l => l.id === 'r-content').s = 'del';
-      inspBody.push({ v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add', id: 'r-choices' });
-      inspBody.find(l => l.id === 'r-stop').s = 'del';
-      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
-      inspBody.find(l => l.id === 'r-usage').s = 'del';
-      inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
-      break;
-    case 18:
-      inspStepLabel = '⑱ guardrails (response)';
-      break;
-    case 19: {
-      inspStepLabel = '⑲ IPP → Gateway (translated response)';
-      const robj = inspBody.find(l => l.id === 'r-obj');
-      if (robj) robj.s = 'highlight';
-      const rch = inspBody.find(l => l.id === 'r-choices');
-      if (rch) rch.s = 'highlight';
-      break; }
-    case 20: {
-      inspStepLabel = '⑳ IPP reads usage.total_tokens';
-      const u2 = inspBody.find(l => l.id === 'r-usage2');
-      if (u2) u2.s = 'highlight';
-      break; }
-    case 21:
-      inspStepLabel = '㉑ Limitador: report token count';
-      break;
-    case 22: {
-      inspStepLabel = '㉒ Response to Client (OpenAI format)';
-      const robj2 = inspBody.find(l => l.id === 'r-obj');
-      if (robj2) robj2.s = 'highlight';
-      const rch2 = inspBody.find(l => l.id === 'r-choices');
-      if (rch2) rch2.s = 'highlight';
-      break; }
-  }
-  renderInsp();
-}
-
 // ================================================================
-// FLOW DEFINITIONS
+// INSPECTOR MUTATION HELPERS
 // ================================================================
-let activeFlow = 'ext';
-const flowExt = [
-  // REQUEST PATH
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  // IPP policy plugins
-  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  // IPP request plugins
-  { t: '7. guardrails: request safety check', mode: 'lightup', target: 'p_rguard', badge: 7 },
-  { t: '8. intelligent-model-selection [tbd]', mode: 'lightup', target: 'p_ims', badge: 8 },
-  { t: '9. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 9 },
-  { t: '10. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 10 },
-  { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 11 },
-  { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
-  { t: '13. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '14. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
-  // RESPONSE PATH
-  { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '16. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  // IPP response plugins
-  { t: '17. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
-  { t: '18. guardrails: response safety check', mode: 'lightup', target: 'p_resp_guard', badge: 18 },
-  { t: '19. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 19, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  // TOKEN USAGE REPORTING
-  { t: '20. IPP reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 20 },
-  { t: '21. IPP reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 21 },
-  { t: '22. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 10 },
-];
+function hPush(v){inspHeaders.push({v,s:'add',id:v});}
+function hCut(pre){const l=inspHeaders.find(x=>x.v.startsWith(pre)&&x.s!=='del');if(l)l.s='del';}
+function hHi(pre){const l=inspHeaders.find(x=>x.v.startsWith(pre)&&x.s!=='del');if(l)l.s='highlight';}
+function bPush(v){inspBody.push({v,s:'add',id:v});}
+function bCut(pre){const l=inspBody.find(x=>x.v.startsWith(pre)&&x.s!=='del');if(l)l.s='del';}
+function bHi(pre){const l=inspBody.find(x=>x.v.startsWith(pre)&&x.s!=='del');if(l)l.s='highlight';}
+function bSet(a){inspBody=a.map(v=>({v,s:'add',id:v}));}
+function cPush(v){inspCycle.push({v,s:'add',id:v});}
+function cHi(pre){const l=inspCycle.find(x=>x.v.startsWith(pre)&&x.s!=='del');if(l)l.s='highlight';}
+function cSet(a){inspCycle=a.map(v=>({v,s:'add',id:v}));}
+function respOK(){setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[];}
+function errResp(status,lines){setInspPhase('error');inspHeaders=[{v:status,s:'err',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=lines.map(v=>({v,s:'err',id:v}));inspCycle=[];}
 
-const flowInc = [
-  // REQUEST PATH
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  // IPP policy plugins
-  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  // IPP request plugins (no api-translation, no apikey-injection for on-cluster)
-  { t: '7. guardrails: request safety check', mode: 'lightup', target: 'p_rguard', badge: 7 },
-  { t: '8. intelligent-model-selection [tbd]', mode: 'lightup', target: 'p_ims', badge: 8 },
-  { t: '9. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 9 },
-  { t: '10. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 10 },
-  { t: '11. base-model-to-header: resolve LoRA base model', mode: 'lightup', target: 'p_bmth', badge: 11 },
-  { t: '12. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  // On-cluster routing
-  { t: '13. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 13, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
-  { t: '14. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 14 },
-  { t: '15. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 15, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
-  { t: '16. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 16, fromBottom: true, fromXOff: -35, toTop: true },
-  { t: '17. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 17 },
-  { t: '18. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 18, fromRight: true, toLeft: true },
-  { t: '19. Prefill processing', mode: 'lightup', target: 'prefill', badge: 19 },
-  { t: '20. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 20, fromTop: true, fromXOff: 30, toRight: true },
-  { t: '21. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 21, fromLeft: true, toTop: true, toXOff: -60 },
-  { t: '22. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 22, fromRight: true, toLeft: true, yOff: -8 },
-  { t: '23. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 23, fromLeft: true, toRight: true, yOff: 8 },
-  // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
-  { t: '25. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 25, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
-  { t: '26. EPP response plugins', mode: 'lightup', target: 'sched', badge: 26 },
-  { t: '27. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
-  { t: '28. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 28, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '29. guardrails: response safety check', mode: 'lightup', target: 'p_resp_guard', badge: 29 },
-  { t: '30. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 30, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '31. IPP reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 31 },
-  { t: '32. IPP reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 32 },
-  { t: '33. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 33, fromLeft: true, toRight: true, yOff: 10 },
-];
-
-const flowAuth = [
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'auth', c: '#f85149', num: 5, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '6. Auth rejects request', mode: 'lightup', target: 'auth', badge: '✗', errColor: '#f85149' },
-  { t: '7. IPP → Gateway (auth failed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 7, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '8. Gateway → Client: 401 Unauthorized', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 8, fromLeft: true, toRight: true, yOff: 10 },
-];
-
-const flowRL = [
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. Limitador: quota EXCEEDED', mode: 'lightup', target: 'rlimit', badge: '✗', errColor: '#f85149' },
-  { t: '8. IPP → Gateway (rate limited)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 8, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '9. Gateway → Client: 429 Too Many Requests', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 9, fromLeft: true, toRight: true, yOff: 10 },
-];
-
-// Shared Phase A steps for all Responses API flows (IPP policy chain)
-const respPhaseA = [
-  { t: '1. Client sends POST /v1/responses', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 2, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. IPP → MaaS API (key validation)', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: 4, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: 5, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. IPP → Gateway (routes to Agentic Loop)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-];
-
-// Shared waypoints: inference-caller → Gateway (up from agentic loop to gateway)
-const wpInferToGw = [{x: 140, y: 569}, {x: 140, y: 230}, {x: 350, y: 230}];
-const wpAlToGw = [{x: 155, y: 747}, {x: 155, y: 190}, {x: 500, y: 190}];
-
-// Circled number helper for inspector labels (①-⑳, ㉑-㉟, ㊱-㊿, then fallback)
+// Circled number helper (①-⑳, ㉑-㉟, ㊱-㊿, then fallback)
 function cn(n) {
   if (n >= 1 && n <= 20) return String.fromCodePoint(0x245F + n);
   if (n >= 21 && n <= 35) return String.fromCodePoint(0x3250 + n - 20);
@@ -2211,206 +1078,353 @@ function cn(n) {
   return '(' + n + ')';
 }
 
-// Full IPP sub-flow for inference calls (22 steps per iteration)
-// Replicates the Chat Completions External Model path through IPP
-function makeInferSubflow(n) {
+function inspStep(stepNum) {
+  resetStyles();
+  const s = flow[stepNum - 1];
+  if (s) inspStepLabel = cn(stepNum) + ' ' + s.t.replace(/^\d+\.\s*/, '');
+  if (s && s.insp) s.insp();
+  renderInsp();
+}
+
+// ================================================================
+// FLOW DEFINITIONS
+// ================================================================
+let activeFlow = 'ext';
+
+// step makers
+const A = (t, f, to, c, o, insp) => Object.assign({ t, mode: 'arrow', f, to, c }, o || {}, insp ? { insp } : {});
+const L = (t, target, insp, o) => Object.assign({ t, mode: 'lightup', target }, o || {}, insp ? { insp } : {});
+
+// shared waypoint channels (gap between loop and pipeline at x≈705–735)
+const wpEgressOut = [{x: 715, y: 539}, {x: 715, y: 690}];
+const wpEgressBack = [{x: 725, y: 737}, {x: 725, y: 413}];
+const wpAlToGw = [{x: 165, y: 561}, {x: 165, y: 185}, {x: 500, y: 185}];
+
+// shared intake: front door + identity + resolution + policy
+function mkIntake(pathLabel, budgetLine) {
   return [
-    { t: n+'. inference-caller → Gateway', mode: 'arrow', f: 'al_inference', to: 'gw', c: '#58a6ff', num: n,
-      fromLeft: true, waypoints: wpInferToGw, toBottom: true, toXOff: -250 },
-    { t: (n+1)+'. Gateway → IPP (nested inference)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: n+1,
-      glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-    { t: (n+2)+'. Auth — skipped (authenticated at intake)', mode: 'lightup', target: 'auth', badge: n+2, skip: true },
-    { t: (n+3)+'. MaaS API — skipped', mode: 'arrow', f: 'auth', to: 'maas', c: '#58a6ff', num: n+3,
-      fromLeft: true, toRight: true, yOff: -5, skip: true },
-    { t: (n+4)+'. MaaS API — skipped', mode: 'arrow', f: 'maas', to: 'auth', c: '#58a6ff', num: n+4,
-      fromRight: true, toLeft: true, yOff: 5, skip: true },
-    { t: (n+5)+'. Rate Limit — skipped (checked at intake)', mode: 'lightup', target: 'rlimit', badge: n+5, skip: true },
-    { t: (n+6)+'. guardrails — skipped (no history context in IPP)', mode: 'lightup', target: 'p_rguard', badge: n+6, skip: true },
-    { t: (n+7)+'. intelligent-model-selection — skipped (invariant)', mode: 'lightup', target: 'p_ims', badge: n+7, skip: true },
-    { t: (n+8)+'. model-provider-resolver — skipped (resolved at intake)', mode: 'lightup', target: 'p_mpr', badge: n+8, skip: true },
-    { t: (n+9)+'. body-field-to-header — skipped (invariant)', mode: 'lightup', target: 'p_bfth', badge: n+9, skip: true },
-    { t: (n+10)+'. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: n+10 },
-    { t: (n+11)+'. apikey-injection — skipped (credential cached)', mode: 'lightup', target: 'p_aki', badge: n+11, skip: true },
-    { t: (n+12)+'. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: n+12,
-      fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-    { t: (n+13)+'. Gateway → Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: n+13,
-      fromLeft: true, toRight: true, yOff: -10 },
-    { t: (n+14)+'. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: n+14,
-      fromRight: true, toLeft: true, yOff: 10 },
-    { t: (n+15)+'. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: n+15,
-      fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-    { t: (n+16)+'. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: n+16 },
-    { t: (n+17)+'. guardrails — skipped (done in agentic loop)', mode: 'lightup', target: 'p_resp_guard', badge: n+17, skip: true },
-    { t: (n+18)+'. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: n+18,
-      fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-    { t: (n+19)+'. Rate Limit reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: n+19 },
-    { t: (n+20)+'. Rate Limit reports token count', mode: 'lightup', target: 'rlimit', badge: n+20 },
-    { t: (n+21)+'. Gateway → Agentic Loop (model response)', mode: 'arrow', f: 'gw', to: 'al_api_trans', c: '#3fb950', num: n+21,
-      fromBottom: true, fromXOff: -200, toTop: true },
+    A('Client sends ' + pathLabel + ' (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
+    A('Gateway steers once → Praxis (headers only, never the body)', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
+      () => { hHi('Authorization'); }),
+    L('identity: MaaS key → user · tenant · agent (request context)', 'f_ident',
+      () => { cSet(['identity = "cluster-admin"', 'tenant = "ml-platform"', 'subscription = "ext-models-sub"']); }),
+    A('identity → MaaS (validate key, load subscription)', 'f_ident', 'maas', '#f0883e', { fromRight: true, waypoints: [{x:1155,y:287},{x:1155,y:660}], toTop: true, toXOff: 60 }),
+    A('MaaS → identity (key valid)', 'maas', 'f_ident', '#f0883e', { fromTop: true, fromXOff: 100, waypoints: [{x:1178,y:660},{x:1178,y:297}], toRight: true, yOff: 10 }),
+    L('model resolution: "model" from body via MaaS-managed config', 'f_resolve',
+      () => { bHi('"model"'); cPush('provider = "anthropic"'); cPush('targetModel = "claude-haiku-4-5-20251001"'); }),
+    L('policy: entitlements · quota admit (keys on resolved model)', 'f_policy',
+      () => { cPush(budgetLine); }),
   ];
 }
 
-// ── Flow: Simple Completion (40 steps) ──
+// ── Chat Completions: External Model (Anthropic) ──
+const flowExt = [
+  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}'),
+  L('API translation: OpenAI → Anthropic Messages', 'f_trans',
+    () => { hCut('POST /v1/chat'); hPush('POST /v1/messages'); hPush('anthropic-version: 2023-06-01'); }),
+  L('guardrails: request check (uniform, all paths)', 'f_guard'),
+  L('credential injection: provider key (client key never forwarded)', 'f_cred',
+    () => { hCut('Authorization'); hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
+  L('routing: external egress → Anthropic (terminal)', 'f_route'),
+  A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromLeft: true, waypoints: wpEgressOut, toTop: true, toXOff: 30 }),
+  A('Anthropic responds (stream)', 'anthropic', 'f_trans', '#3fb950', { fromRight: true, waypoints: wpEgressBack, toLeft: true, yOff: -6 },
+    () => { respOK(); bSet(['"type": "message"', '"content": [{"type":"text","text":"Hello!"}]', '"stop_reason": "end_turn"', '"usage": {"input_tokens":8,"output_tokens":2}']); inspCycle = []; }),
+  L('translation: Anthropic → OpenAI (SSE-aware, in-process)', 'f_trans',
+    () => { bCut('"type"'); bPush('"object": "chat.completion"'); bCut('"content"'); bPush('"choices": [{"message":{"content":"Hello!"}}]'); bCut('"stop_reason"'); bPush('"finish_reason": "stop"'); }),
+  L('guardrails: response check (in-stream)', 'f_guard'),
+  L('policy: usage → budget tree (in-process, no callback)', 'f_policy',
+    () => { bHi('"usage"'); }),
+  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Response to client (OpenAI format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"object"'); bHi('"choices"'); }),
+];
+
+// ── Chat Completions: Internal Model (llm-d) ──
+const flowInc = [
+  ...mkIntake('POST /v1/chat/completions', 'budget = {session: 200k tokens}').map(s => s), 
+  L('guardrails: request check', 'f_guard'),
+  L('routing: on-cluster → placement consult', 'f_route'),
+  A('Praxis → EPP (full-duplex contract, Praxis as client)', 'f_route', 'sched', '#79c0ff', { glow: 'epp', fromLeft: true, waypoints: [{x:715,y:539},{x:715,y:685}], toTop: true, toXOff: -40 }),
+  L('EPP: KV-cache-aware P/D pod selection', 'sched',
+    () => { cPush('pods = {prefill: pod-b, decode: pod-a}'); }),
+  A('EPP → Praxis (pods selected)', 'sched', 'f_route', '#79c0ff', { fromTop: true, fromXOff: 70, waypoints: [{x:727,y:695},{x:727,y:549}], toLeft: true, yOff: 10 }),
+  A('Praxis → Sidecar (route to selected pod)', 'f_route', 'sidecar', '#58a6ff', { fromBottom: true, fromXOff: -100, waypoints: [{x:835,y:845}], toTop: true, toXOff: 20 }),
+  L('Sidecar coordinates P/D transaction', 'sidecar'),
+  A('Sidecar → Prefill Pod B', 'sidecar', 'prefill', '#58a6ff', { fromRight: true, toLeft: true }),
+  L('Prefill processing (KV cache built)', 'prefill'),
+  A('Prefill → Sidecar (KV metadata ready)', 'prefill', 'sidecar', '#3fb950', { fromTop: true, fromXOff: 30, toRight: true }),
+  A('Sidecar → Decode Pod A', 'sidecar', 'decode', '#58a6ff', { fromLeft: true, toTop: true, toXOff: -60 }),
+  A('Decode pulls KVs via NIXL', 'decode', 'nixl', '#8b949e', { fromRight: true, toLeft: true, yOff: -8 }),
+  A('NIXL returns KV cache (RDMA)', 'nixl', 'decode', '#8b949e', { fromLeft: true, toRight: true, yOff: 8 }),
+  A('Decode streams tokens → Praxis', 'decode', 'f_trans', '#3fb950', { fromTop: true, fromXOff: 50, waypoints: [{x:400,y:848},{x:725,y:848},{x:725,y:413}], toLeft: true, yOff: -6 },
+    () => { respOK(); bSet(['"object": "chat.completion"', '"choices": [{"message":{"content":"Hello!"}}]', '"finish_reason": "stop"', '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}']); inspCycle = []; }),
+  L('guardrails: response check (in-stream)', 'f_guard'),
+  L('policy: usage → budget tree', 'f_policy', () => { bHi('"usage"'); }),
+  A('Praxis → Gateway (relayed bytes)', 'f_ident', 'gw', '#3fb950', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Response to client (OpenAI format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"choices"'); }),
+];
+
+// ── Auth Failure (401) ──
+const flowAuth = [
+  A('Client sends POST /v1/chat/completions (TLS)', 'user', 'gw', '#58a6ff', { fromRight: true, toLeft: true, yOff: -10 }),
+  A('Gateway steers once → Praxis', 'gw', 'f_ident', '#58a6ff', { glow: 'praxis', fromBottom: true, fromXOff: 250, toTop: true, toXOff: -60 },
+    () => { hHi('Authorization'); }),
+  L('identity: validate MaaS key', 'f_ident'),
+  A('identity → MaaS (validate key)', 'f_ident', 'maas', '#f0883e', { fromRight: true, waypoints: [{x:1155,y:287},{x:1155,y:660}], toTop: true, toXOff: 60 }),
+  A('MaaS → identity: key INVALID', 'maas', 'f_ident', '#f85149', { fromTop: true, fromXOff: 100, waypoints: [{x:1178,y:660},{x:1178,y:297}], toRight: true, yOff: 10 },
+    () => { hCut('Authorization'); bSet(['"valid": false', '"error": "invalid_api_key"']); }),
+  L('identity REJECTS — pipeline stops before any capability', 'f_ident',
+    () => { errResp('HTTP/1.1 401 Unauthorized', ['"error": "invalid_api_key"', '"message": "API key is not valid"']); },
+    { badge: '✗', errColor: '#f85149' }),
+  A('Praxis → Gateway (401)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Gateway → Client: 401 Unauthorized', 'gw', 'user', '#f85149', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { hHi('HTTP/1.1 401'); }),
+];
+
+// ── Rate Limit (429) ──
+const flowRL = [
+  ...mkIntake('POST /v1/chat/completions', 'budget check: session at limit'),
+  L('policy: budget tree EXHAUSTED (whole-session accounting)', 'f_policy',
+    () => { errResp('HTTP/1.1 429 Too Many Requests', ['"error": "rate_limited"', '"message": "Session token budget exceeded"', '"retry_after": 60']); },
+    { badge: '✗', errColor: '#f85149' }),
+  A('Praxis → Gateway (429)', 'f_ident', 'gw', '#f85149', { fromTop: true, fromXOff: 120, toBottom: true, toXOff: 330 }),
+  A('Gateway → Client: 429 Too Many Requests', 'gw', 'user', '#f85149', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { hHi('HTTP/1.1 429'); }),
+];
+
+// ── Responses API shared intake ──
+function mkRespIntake() {
+  return [
+    ...mkIntake('POST /v1/responses', 'budget tree = {session root: 200k}'),
+    L('routing: Responses API → agentic loop (in-process)', 'f_route'),
+    A('pipeline → Agentic Loop', 'f_route', 'al_validator', '#d2a8ff', { glow: 'al', fromLeft: true, toRight: true }),
+  ];
+}
+
+// ── Loop iteration: subrequest re-enters the pipeline (the composition guarantee) ──
+function mkIteration(iter, provResp, outputItems, ctxAfter) {
+  return [
+    A('⟳ iteration ' + iter + ': subrequest re-enters pipeline (in-process)', 'al_subreq', 'f_policy', '#d2a8ff', { fromRight: true, toLeft: true },
+      () => { cPush('iteration = ' + iter); }),
+    L('policy: budget tree check — iteration inherits auth · quotas · audit', 'f_policy',
+      () => { cHi('budget tree'); }),
+    L('translation: Responses items → provider format', 'f_trans',
+      () => { hCut('POST /v1/responses'); hPush('POST /v1/messages (subrequest)'); }),
+    L('guardrails: in-loop check', 'f_guard'),
+    L('credential injection', 'f_cred',
+      () => { hPush('x-api-key: sk-ant-api03-xxxxx...'); }),
+    L('routing: external egress', 'f_route'),
+    A('Praxis → Anthropic (direct egress)', 'f_route', 'anthropic', '#58a6ff', { fromLeft: true, waypoints: wpEgressOut, toTop: true, toXOff: 30 }),
+    A('Anthropic responds', 'anthropic', 'f_trans', '#3fb950', { fromRight: true, waypoints: wpEgressBack, toLeft: true, yOff: -6 },
+      () => { respOK(); bSet(provResp); inspCycle = []; }),
+    L('translation → output items · usage → one budget tree', 'f_trans',
+      () => { setInspPhase('request'); inspHeaders = [{v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-prog'}]; bSet(outputItems); cSet(ctxAfter); }),
+    A('model output → loop', 'f_trans', 'al_tool_handler', '#3fb950', { fromLeft: true, toRight: true, yOff: 6 }),
+  ];
+}
+
+const finishSteps = (respId, outputLine) => [
+  L('response-assembler: build ResponseResource', 'al_assembler',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', outputLine, '"usage": one total across all iterations & tool calls']); inspCycle = []; }),
+  L('response-store: persist', 'al_store', () => { bPush('"id": "' + respId + '"'); }),
+  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+    () => { bHi('"object"'); }),
+  A('Response to client (Responses API format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"output"'); }),
+];
+
+// ── Flow: Simple Completion ──
 const flowRespSimple = [
-  ...respPhaseA,
-  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
-  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
-  { t: '10. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 10 },
-  ...makeInferSubflow(11),
-  { t: '33. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 33 },
-  { t: '34. loop-controller: no tools → stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 34 },
-  { t: '35. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 35 },
-  { t: '36. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 36 },
-  { t: '37. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 37, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '38. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 38, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '39. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 39,
-    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-  { t: '40. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 40, fromLeft: true, toRight: true, yOff: 10 },
+  ...mkRespIntake(),
+  L('request-validator', 'al_validator',
+    () => { cPush('validated_params = {...}'); cPush('has_tools = false'); }),
+  ...mkIteration(1,
+    ['"content": [{"type":"text","text":"Transformers..."}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"Transformers..."}]'],
+    ['iteration = 1', 'tool_routing = []', 'budget tree: usage recorded']),
+  L('tool-call-handler: no tool calls', 'al_tool_handler'),
+  L('loop-controller: stop_completed', 'al_loop_ctrl',
+    () => { cPush('loop_action = "stop_completed"'); }),
+  ...finishSteps('resp_abc123', '"output": [{"type":"message","content":"Transformers..."}]'),
 ];
 
-// ── Flow: RAG + Conversation (77 steps) ──
+// ── Flow: RAG + Conversation ──
 const flowRespRag = [
-  ...respPhaseA,
-  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
-  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
-  { t: '10. conversation-manager: load conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 10 },
-  { t: '11. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '12. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '13. tool-registry: register file_search', mode: 'lightup', target: 'al_tool_reg', badge: 13 },
-  { t: '14. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 14 },
-  ...makeInferSubflow(15),
-  { t: '37. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 37 },
-  { t: '38. tool-call-handler: file_search detected', mode: 'lightup', target: 'al_tool_handler', badge: 38 },
-  { t: '39. loop-controller: server-side tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 39 },
-  { t: '40. server-tool-executor: file_search → vector store', mode: 'lightup', target: 'al_srv_exec', badge: 40 },
-  { t: '41. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 41, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '42. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 42, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '43. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 43 },
-  ...makeInferSubflow(44),
-  { t: '66. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 66 },
-  { t: '67. tool-call-handler: no tool calls', mode: 'lightup', target: 'al_tool_handler', badge: 67 },
-  { t: '68. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 68 },
-  { t: '69. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 69 },
-  { t: '70. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 70 },
-  { t: '71. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 71, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '72. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 72, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '73. conversation-manager: save conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 73 },
-  { t: '74. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 74, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '75. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 75, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '76. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 76,
-    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-  { t: '77. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 77, fromLeft: true, toRight: true, yOff: 10 },
+  ...mkRespIntake(),
+  L('request-validator', 'al_validator',
+    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('has_conversation = true'); }),
+  L('conversation-manager: load conversation', 'al_conv_mgr',
+    () => { cPush('conversation_items = [...]'); }),
+  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('tool-registry: register file_search', 'al_tool_reg',
+    () => { cPush('tools = [{type:"file_search",vs_ids:[...]}]'); }),
+  ...mkIteration(1,
+    ['"content": [{"type":"tool_use","name":"file_search",...}]', '"stop_reason": "tool_use"'],
+    ['"output": [{"type":"file_search_call",...}]'],
+    ['iteration = 1', 'tool_routing = [{type:"file_search"}]']),
+  L('tool-call-handler: file_search detected', 'al_tool_handler',
+    () => { cHi('tool_routing'); cPush('has_server_side_tools = true'); }),
+  L('loop-controller: continue (within budget tree)', 'al_loop_ctrl',
+    () => { cPush('loop_action = "continue"'); }),
+  L('server-tool-executor: file_search', 'al_srv_exec',
+    () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
+  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(2,
+    ['"content": [{"type":"text","text":"Based on Q4 docs..."}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"Q4 results..."}]'],
+    ['iteration = 2', 'total_tool_calls = 1', 'tool_routing = []']),
+  L('tool-call-handler: no tool calls', 'al_tool_handler'),
+  L('loop-controller: stop_completed', 'al_loop_ctrl',
+    () => { cPush('loop_action = "stop_completed"'); }),
+  L('response-assembler: build ResponseResource', 'al_assembler',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Q4 results..."}]', '"usage": whole-session totals']); inspCycle = []; }),
+  L('response-store: persist', 'al_store', () => { bPush('"id": "resp_rag456"'); }),
+  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('conversation-manager: save conversation', 'al_conv_mgr',
+    () => { bPush('"conversation": "my-session-001"'); }),
+  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 }),
+  A('Response to client (Responses API format)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"output"'); }),
 ];
 
-// ── Flow: MCP Agent Loop (73 steps) ──
+// ── Flow: MCP Agent Loop (streaming) ──
 const flowRespMcp = [
-  ...respPhaseA,
-  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
-  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
-  { t: '10. tool-registry: MCP tool discovery', mode: 'lightup', target: 'al_tool_reg', badge: 10 },
-  { t: '11. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '12. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '13. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 13 },
-  ...makeInferSubflow(14),
-  { t: '36. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 36 },
-  { t: '37. tool-call-handler: MCP tool call detected', mode: 'lightup', target: 'al_tool_handler', badge: 37 },
-  { t: '38. loop-controller: server-side tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 38 },
-  { t: '39. mcp-executor: execute MCP tool, append result', mode: 'lightup', target: 'al_mcp_exec', badge: 39 },
-  { t: '40. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 40, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '41. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 41, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '42. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 42 },
-  ...makeInferSubflow(43),
-  { t: '65. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 65 },
-  { t: '66. tool-call-handler: no tool calls', mode: 'lightup', target: 'al_tool_handler', badge: 66 },
-  { t: '67. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 67 },
-  { t: '68. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 68 },
-  { t: '69. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 69 },
-  { t: '70. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 70, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '71. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 71, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '72. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 72,
-    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-  { t: '73. Response to client (Responses API format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 73, fromLeft: true, toRight: true, yOff: 10 },
+  ...mkRespIntake(),
+  L('request-validator (stream: true)', 'al_validator',
+    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('is_streaming = true'); }),
+  L('tool-registry: MCP tool discovery', 'al_tool_reg',
+    () => { cPush('mcp_tools = ["get_weather","get_forecast"]'); }),
+  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(1,
+    ['"content": [{"type":"tool_use","name":"get_weather",...}]', '"stop_reason": "tool_use"'],
+    ['"output": [{"type":"mcp_call","name":"get_weather",...}]'],
+    ['iteration = 1', 'tool_routing = [{type:"mcp",name:"get_weather"}]']),
+  A('semantic events stream to client throughout (gateway relays bytes)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 18 }),
+  L('tool-call-handler: MCP tool detected', 'al_tool_handler',
+    () => { cHi('tool_routing'); cPush('has_server_side_tools = true'); }),
+  L('loop-controller: continue', 'al_loop_ctrl',
+    () => { cPush('loop_action = "continue"'); }),
+  L('mcp-executor: execute tool (same identity spine · per-action auth)', 'al_mcp_exec',
+    () => { bPush('"mcp_result": {"temp":"72F","condition":"sunny"}'); }),
+  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(2,
+    ['"content": [{"type":"text","text":"72F and sunny..."}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"72F, sunny"}]'],
+    ['iteration = 2', 'total_tool_calls = 1', 'tool_routing = []']),
+  L('tool-call-handler: no tool calls', 'al_tool_handler'),
+  L('loop-controller: stop_completed', 'al_loop_ctrl',
+    () => { cPush('loop_action = "stop_completed"'); }),
+  ...finishSteps('resp_mcp789', '"output": [{"type":"message","content":"72F, sunny"}]'),
 ];
 
-// ── Flow: Background Processing (79 steps) ──
+// ── Flow: Background Processing ──
 const flowRespBg = [
-  ...respPhaseA,
-  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
-  { t: '9. request-validator (background: true)', mode: 'lightup', target: 'al_validator', badge: 9 },
-  { t: '10. tool-registry: file_search + MCP', mode: 'lightup', target: 'al_tool_reg', badge: 10 },
-  { t: '11. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '12. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '13. response-store: store queued response', mode: 'lightup', target: 'al_store', badge: 13 },
-  { t: '14. response-store → Response Store (queue)', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 14, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '15. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '16. Agentic Loop → Gateway (queued response)', mode: 'arrow', f: 'al_store', to: 'gw', c: '#d2a8ff', num: 16,
-    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-  { t: '17. Gateway → Client: queued response (immediate)', mode: 'arrow', f: 'gw', to: 'user', c: '#d2a8ff', num: 17, fromLeft: true, toRight: true, yOff: 10 },
-  { t: '18. [async] api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 18 },
-  ...makeInferSubflow(19),
-  { t: '41. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 41 },
-  { t: '42. tool-call-handler: file_search + MCP detected', mode: 'lightup', target: 'al_tool_handler', badge: 42 },
-  { t: '43. server-tool-executor: file_search', mode: 'lightup', target: 'al_srv_exec', badge: 43 },
-  { t: '44. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 44, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '45. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 45, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '46. mcp-executor: MCP tool', mode: 'lightup', target: 'al_mcp_exec', badge: 46 },
-  { t: '47. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 47, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '48. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 48, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '49. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 49 },
-  ...makeInferSubflow(50),
-  { t: '72. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 72 },
-  { t: '73. loop-controller: stop_completed', mode: 'lightup', target: 'al_loop_ctrl', badge: 73 },
-  { t: '74. response-assembler: build ResponseResource', mode: 'lightup', target: 'al_assembler', badge: 74 },
-  { t: '75. response-store: update stored response', mode: 'lightup', target: 'al_store', badge: 75 },
-  { t: '76. response-store → Response Store (update)', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 76, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '77. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 77, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '78. Client polls: GET /v1/responses/{id}', mode: 'arrow', f: 'user', to: 'gw', c: '#d2a8ff', num: 78, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '79. Gateway → Client: completed response', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 79, fromLeft: true, toRight: true, yOff: 20 },
+  ...mkRespIntake(),
+  L('request-validator (background: true)', 'al_validator',
+    () => { cPush('validated_params = {...}'); cPush('is_background = true'); }),
+  L('tool-registry: file_search + MCP', 'al_tool_reg',
+    () => { cPush('tools = [file_search, mcp]'); }),
+  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('response-store: queue response', 'al_store',
+    () => { respOK(); bSet(['"object": "response"', '"status": "queued"', '"id": "resp_bg789"']); inspCycle = []; }),
+  A('response-store → Response Store (queue)', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (queued response)', 'al_store', 'gw', '#d2a8ff', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
+    () => { bHi('"status"'); }),
+  A('Client receives queued response (immediate)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"id"'); }),
+  ...mkIteration(1,
+    ['"content": [tool_use:file_search, tool_use:mcp_tool]', '"stop_reason": "tool_use"'],
+    ['"output": [file_search_call, mcp_call]'],
+    ['[async] iteration = 1', 'tool_routing = [file_search, mcp]', 'same budget tree — background inherits policy']),
+  L('tool-call-handler: tools detected', 'al_tool_handler',
+    () => { cPush('has_server_side_tools = true'); }),
+  L('server-tool-executor: file_search', 'al_srv_exec',
+    () => { bPush('"file_search_result": {chunks:[...]}'); }),
+  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('mcp-executor: MCP tool', 'al_mcp_exec',
+    () => { bPush('"mcp_result": {"data":"..."}'); }),
+  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(2,
+    ['"content": [{"type":"text","text":"Analysis complete..."}]', '"stop_reason": "end_turn"'],
+    ['"output": [{"type":"message","content":"Analysis..."}]'],
+    ['[async] iteration = 2', 'total_tool_calls = 2', 'tool_routing = []']),
+  L('loop-controller: stop_completed', 'al_loop_ctrl',
+    () => { cPush('loop_action = "stop_completed"'); }),
+  L('response-assembler: build ResponseResource', 'al_assembler',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]', '"usage": whole-session totals']); inspCycle = []; }),
+  L('response-store: update stored response', 'al_store',
+    () => { bPush('"id": "resp_bg789"'); }),
+  A('response-store → Response Store (update)', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Client polls: GET /v1/responses/resp_bg789', 'user', 'gw', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 10 },
+    () => { setInspPhase('request'); inspHeaders = [{v:'GET /v1/responses/resp_bg789',s:'add',id:'h-poll'},{v:'Authorization: Bearer sk-oai-abc123...',s:'add',id:'h-auth'}]; inspBody = []; inspCycle = []; }),
+  A('Gateway → Client: completed response', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 20 },
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{"type":"message","content":"Analysis..."}]']); bHi('"status"'); }),
 ];
 
-// ── Flow: Full Advanced (88 steps) ──
+// ── Flow: Full Advanced (mixed tools + function yield) ──
 const flowRespFull = [
-  ...respPhaseA,
-  { t: '8. Gateway → Agentic Loop', mode: 'arrow', f: 'gw', to: 'al_validator', c: '#58a6ff', num: 8, glow: 'al', fromBottom: true, fromXOff: -100, toTop: true },
-  { t: '9. request-validator', mode: 'lightup', target: 'al_validator', badge: 9 },
-  { t: '10. conversation-manager: load conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 10 },
-  { t: '11. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 11, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '12. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '13. tool-registry: file_search + MCP + function', mode: 'lightup', target: 'al_tool_reg', badge: 13 },
-  { t: '14. tool-registry → MCP Server (discovery)', mode: 'arrow', f: 'al_tool_reg', to: 'svc_mcp', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '15. MCP Server → tool-registry', mode: 'arrow', f: 'svc_mcp', to: 'al_tool_reg', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '16. guardrails: input safety check', mode: 'lightup', target: 'al_guardrails', badge: 16 },
-  { t: '17. guardrails → NeMo Guardrails (input)', mode: 'arrow', f: 'al_guardrails', to: 'svc_guardrails', c: '#f0883e', num: 17, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '18. NeMo Guardrails → guardrails', mode: 'arrow', f: 'svc_guardrails', to: 'al_guardrails', c: '#f0883e', num: 18, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '19. api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 19 },
-  ...makeInferSubflow(20),
-  { t: '42. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 42 },
-  { t: '43. guardrails: output safety check', mode: 'lightup', target: 'al_guardrails', badge: 43 },
-  { t: '44. guardrails → NeMo Guardrails (output)', mode: 'arrow', f: 'al_guardrails', to: 'svc_guardrails', c: '#f0883e', num: 44, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '45. NeMo Guardrails → guardrails', mode: 'arrow', f: 'svc_guardrails', to: 'al_guardrails', c: '#f0883e', num: 45, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '46. tool-call-handler: file_search + MCP + function', mode: 'lightup', target: 'al_tool_handler', badge: 46 },
-  { t: '47. loop-controller: mixed tools → continue', mode: 'lightup', target: 'al_loop_ctrl', badge: 47 },
-  { t: '48. server-tool-executor: file_search', mode: 'lightup', target: 'al_srv_exec', badge: 48 },
-  { t: '49. server-tool-executor → File Service', mode: 'arrow', f: 'al_srv_exec', to: 'svc_files', c: '#3fb950', num: 49, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '50. File Service → server-tool-executor', mode: 'arrow', f: 'svc_files', to: 'al_srv_exec', c: '#3fb950', num: 50, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '51. mcp-executor: MCP tool', mode: 'lightup', target: 'al_mcp_exec', badge: 51 },
-  { t: '52. mcp-executor → MCP Server', mode: 'arrow', f: 'al_mcp_exec', to: 'svc_mcp', c: '#d2a8ff', num: 52, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '53. MCP Server → mcp-executor', mode: 'arrow', f: 'svc_mcp', to: 'al_mcp_exec', c: '#d2a8ff', num: 53, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '54. ⟳ Loop back: api-translation (request)', mode: 'lightup', target: 'al_api_trans', badge: 54 },
-  ...makeInferSubflow(55),
-  { t: '77. api-translation (response)', mode: 'lightup', target: 'al_api_trans', badge: 77 },
-  { t: '78. tool-call-handler: function tool → yield', mode: 'lightup', target: 'al_tool_handler', badge: 78 },
-  { t: '79. loop-controller: stop_yield', mode: 'lightup', target: 'al_loop_ctrl', badge: 79 },
-  { t: '80. response-assembler: includes function_call', mode: 'lightup', target: 'al_assembler', badge: 80 },
-  { t: '81. response-store: persist response', mode: 'lightup', target: 'al_store', badge: 81 },
-  { t: '82. response-store → Response Store', mode: 'arrow', f: 'al_store', to: 'svc_resp_store', c: '#3fb950', num: 82, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '83. Response Store → response-store', mode: 'arrow', f: 'svc_resp_store', to: 'al_store', c: '#3fb950', num: 83, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '84. conversation-manager: save conversation', mode: 'lightup', target: 'al_conv_mgr', badge: 84 },
-  { t: '85. conversation-manager → Conversation Store', mode: 'arrow', f: 'al_conv_mgr', to: 'svc_conv', c: '#58a6ff', num: 85, fromLeft: true, toRight: true, yOff: -5 },
-  { t: '86. Conversation Store → conversation-manager', mode: 'arrow', f: 'svc_conv', to: 'al_conv_mgr', c: '#58a6ff', num: 86, fromRight: true, toLeft: true, yOff: 5 },
-  { t: '87. Agentic Loop → Gateway', mode: 'arrow', f: 'al_store', to: 'gw', c: '#3fb950', num: 87,
-    fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 },
-  { t: '88. Response to client (function_call in output)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 88, fromLeft: true, toRight: true, yOff: 10 },
+  ...mkRespIntake(),
+  L('request-validator', 'al_validator',
+    () => { cPush('validated_params = {...}'); cPush('has_tools = true'); cPush('has_conversation = true'); cPush('is_streaming = true'); }),
+  L('conversation-manager: load conversation', 'al_conv_mgr',
+    () => { cPush('conversation_items = [...]'); }),
+  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('tool-registry: file_search + MCP + function', 'al_tool_reg',
+    () => { cPush('tools = [file_search, mcp, function]'); }),
+  A('tool-registry → MCP Server (discovery)', 'al_tool_reg', 'svc_mcp', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → tool-registry', 'svc_mcp', 'al_tool_reg', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(1,
+    ['"content": [tool_use:file_search, tool_use:mcp, tool_use:function]', '"stop_reason": "tool_use"'],
+    ['"output": [file_search_call, mcp_call, function_call]'],
+    ['iteration = 1', 'tool_routing = [file_search, mcp, function]']),
+  L('tool-call-handler: mixed tools (server-side first)', 'al_tool_handler',
+    () => { cPush('has_server_side_tools = true'); cPush('has_function_tools = true'); }),
+  L('loop-controller: continue', 'al_loop_ctrl',
+    () => { cPush('loop_action = "continue"'); }),
+  L('server-tool-executor: file_search', 'al_srv_exec',
+    () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
+  A('server-tool-executor → File Service', 'al_srv_exec', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → server-tool-executor', 'svc_files', 'al_srv_exec', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('mcp-executor: MCP tool (per-action authorization)', 'al_mcp_exec',
+    () => { bPush('"mcp_result": {"data":"..."}'); }),
+  A('mcp-executor → MCP Server', 'al_mcp_exec', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → mcp-executor', 'svc_mcp', 'al_mcp_exec', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  ...mkIteration(2,
+    ['"content": [{"type":"tool_use","name":"get_weather",...}]', '"stop_reason": "tool_use"'],
+    ['"output": [function_call: "get_weather"]'],
+    ['iteration = 2', 'model emits function_call: get_weather']),
+  L('tool-call-handler: function tool → yield to client', 'al_tool_handler',
+    () => { cPush('has_function_tools = true'); cPush('has_server_side_tools = false'); }),
+  L('loop-controller: stop_yield', 'al_loop_ctrl',
+    () => { cPush('loop_action = "stop_yield"'); }),
+  L('response-assembler: function_call in output', 'al_assembler',
+    () => { respOK(); bSet(['"object": "response"', '"status": "completed"', '"output": [{message},{function_call:"get_weather"}]', '"usage": whole-session totals']); inspCycle = []; }),
+  L('response-store: persist', 'al_store', () => { bPush('"id": "resp_full001"'); }),
+  A('response-store → Response Store', 'al_store', 'svc_resp_store', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Response Store → response-store', 'svc_resp_store', 'al_store', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  L('conversation-manager: save conversation', 'al_conv_mgr',
+    () => { bPush('"conversation": "my-session-001"'); }),
+  A('conversation-manager → Conversation Store', 'al_conv_mgr', 'svc_conv', '#58a6ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('Conversation Store → conversation-manager', 'svc_conv', 'al_conv_mgr', '#58a6ff', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('Praxis → Gateway (relayed bytes)', 'al_store', 'gw', '#3fb950', { fromLeft: true, waypoints: wpAlToGw, toBottom: true, toXOff: -50 }),
+  A('Response to client (function_call in output)', 'gw', 'user', '#3fb950', { fromLeft: true, toRight: true, yOff: 10 },
+    () => { bHi('"output"'); }),
 ];
 
 const flowMap = {
@@ -2418,9 +1432,16 @@ const flowMap = {
   resp_simple: flowRespSimple, resp_rag: flowRespRag, resp_mcp: flowRespMcp,
   resp_bg: flowRespBg, resp_full: flowRespFull
 };
+// Auto-number steps, arrow labels, and lightup badges
+Object.values(flowMap).forEach(fl => fl.forEach((s, i) => {
+  const n = i + 1;
+  s.num = n;
+  if (s.mode === 'lightup' && s.badge == null) s.badge = n;
+  s.t = n + '. ' + s.t;
+}));
 const flowLabels = {
   ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)',
-  auth: 'Auth Failure (401)', rl: 'Rate Limit (429)',
+  auth: 'Auth Failure (401)', rl: 'Budget Exhausted (429)',
   resp_simple: 'Simple Completion', resp_rag: 'RAG + Conversation',
   resp_mcp: 'MCP Agent Loop', resp_bg: 'Background Processing',
   resp_full: 'Full Advanced'
@@ -2707,7 +1728,7 @@ setTimeout(() => { toggleLoop(); }, 500);
     {x:.15,y:.12,label:'Client',color:'#58a6ff'},
     {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
     {x:.85,y:.12,label:'Auth',color:'#f0883e'},
-    {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
+    {x:.15,y:.35,label:'Praxis',color:'#d2a8ff'},
     {x:.5,y:.32,label:'Anthropic',color:'#3fb950'},
     {x:.85,y:.35,label:'OpenAI',color:'#3fb950'},
     {x:.2,y:.7,label:'EPP',color:'#79c0ff'},
