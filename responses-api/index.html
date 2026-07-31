@@ -236,7 +236,7 @@ const N = {
   f_rehydrate: { x: 560, y: 426, w: 520, h: 26, label: 'openai_responses_rehydrate', sublabel: 'previous_response_id / conversation → history', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
   f_fileres:   { x: 560, y: 457, w: 520, h: 26, label: 'openai_file_resolve · mcp_tool_resolve', sublabel: 'file_id → file_data · MCP tools/list → tool map', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
   f_loop:      { x: 560, y: 488, w: 520, h: 30, label: 'openai_responses_proxy · name: inference', sublabel: 'rebuild body from ResponsesState · loop rejoin target', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  f_dispatch:  { x: 560, y: 522, w: 520, h: 26, label: 'tool_dispatch', sublabel: 'proposal 00354 · classify tool calls · loop control — not yet implemented', color: '#8b949e', type: 'plugin', inner: true, fs: 13 },
+  f_dispatch:  { x: 560, y: 522, w: 520, h: 26, label: 'agentic_loop · openai_mcp_dispatch', sublabel: 'extract function_calls · loop/done via IRR · MCP tools/call execution', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
   f_trans:     { x: 560, y: 553, w: 520, h: 26, label: 'API translation', sublabel: 'request / response / stream', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
   f_guard:     { x: 560, y: 584, w: 520, h: 26, label: 'guardrails', sublabel: 'uniform · in-stream · in-loop', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
   f_cred:      { x: 560, y: 615, w: 520, h: 26, label: 'credential injection', sublabel: 'BYOK · never exposed to clients', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
@@ -274,8 +274,8 @@ const tips = {
   f_store: { t:'openai_response_store · openai_stream_events', d:'Persists responses on the response path — buffers the complete JSON to extract and save the output (non-streaming required; streaming bypasses persistence). stream_events accumulates SSE events in-process for downstream consumption.', dt:[['Response path','persist · buffers full JSON'],['Streaming','bypasses persistence'],['Backend','SQLite / SQL store'],['Log','persisted response id=resp_...']], links:[['Demo','https://github.com/praxis-proxy/demos/tree/main/demos/openai-responses-multi-turn']] },
   f_rehydrate: { t:'openai_responses_rehydrate', d:'Multi-turn memory. Resolves previous_response_id from the store (or loads conversation items), assembles the full history into ResponsesState — stored turns plus current input.', dt:[['previous_response_id','lookup in store → load stored turns'],['conversation','load conversation items → prepend'],['Precedence','previous_response_id wins over conversation'],['Log','rehydrated conversation=conv_... items=2']] },
   f_fileres: { t:'openai_file_resolve · openai_mcp_tool_resolve', d:'Resolvers run after rehydrate so stored history is available. file_resolve swaps file_id references for inline file_data via the Files API; mcp_tool_resolve calls tools/list on upstream MCP servers and writes mcp_tool_map to ResponsesState — discovery is a filter, not loop logic.', dt:[['file_resolve','file_id → file_data / image_url via Files API'],['mcp_tool_resolve','tools/list per server → mcp_tool_map'],['Order','after rehydrate · before responses_proxy']] },
-  f_loop: { t:'openai_responses_proxy · name: inference', d:'Rebuilds the outbound body from ResponsesState (input ← full message array; strips conversation / previous_response_id — already resolved). Deliberately named \'inference\' in configs so the tool loop\'s branch chain can rejoin here: each iteration re-runs from this point down through translation, guardrails, credentials, and routing, inheriting identity, policy, and the budget tree through the shared request context.', dt:[['Rebuilds','input ← full message array · content-length updated'],['Iterations','subrequests re-enter the chain'],['Tool calls','dispatched to terminal services'],['Proof','turn 2 total_tokens > turn 1 (history prepended)']], links:[['Praxis AI filters','https://github.com/praxis-proxy/ai'],['Open Responses','https://github.com/openresponses/openresponses']] },
-  f_dispatch: { t:'tool_dispatch (proposed — not yet implemented)', d:'The loop-control filter from proposal 00354. Runs on the response path: classifies tool calls, executes server-side tools (MCP, web_search, file_search) via direct calls, appends tool-result messages to ResponsesState.messages, increments the iteration counter, then signals the branch chain: action="loop" rejoins the chain at the filter named inference; action="done" exits (client-side function calls or no tool calls).', dt:[['Status','proposal 00354 · scaffolding merged, filter not yet written'],['Loop','branch chain rejoin: inference · max_iterations mandatory'],['Exits','function calls → done · max_infer_iters → incomplete · finish_reason=length → incomplete'],['Hybrid','server-side tools execute first, then yield to client; continues via previous_response_id']], links:[['Proposal 00354','https://github.com/praxis-proxy/ai/blob/main/docs/proposals/00354_responses-api-filters.md']] },
+  f_loop: { t:'openai_responses_proxy · name: inference', d:'Rebuilds the outbound body from ResponsesState (input ← full message array; strips conversation / previous_response_id — already resolved). Named \'inference\' in configs so the agentic loop\'s IRR subrequest rejoins here: each iteration re-runs from this point down through translation, guardrails, credentials, and routing, inheriting identity, policy, and the budget tree through the shared request context.', dt:[['Rebuilds','input ← full message array · content-length updated'],['Iterations','IRR subrequests re-enter here'],['Tool calls','dispatched to terminal services'],['Proof','turn 2 total_tokens > turn 1 (history prepended)']], links:[['Praxis AI filters','https://github.com/praxis-proxy/ai'],['Open Responses','https://github.com/openresponses/openresponses']] },
+  f_dispatch: { t:'agentic_loop · openai_mcp_dispatch', d:'Two filters working together on the response path. agentic_loop extracts function_call items from the response body, accumulates output items across rounds, and evaluates loop/done: if MCP tool calls are present, signals IRR to create a subrequest that re-enters at the inference filter; if no tool calls or client-side function calls, finalizes the response with accumulated output and usage. openai_mcp_dispatch runs on the request path of subrequests: recognizes MCP-prefixed function names (e.g. weather__get_weather), calls tools/call on the MCP server, and pushes function_call_output + mcp_call items into accumulated_output.', dt:[['agentic_loop','response path · extract function_calls · loop/done decision'],['openai_mcp_dispatch','request path · MCP tools/call · function_call_output + mcp_call → accumulated_output'],['Loop','IRR subrequest rejoin at inference · max_iterations bounded'],['Exits','no tool calls → done · client function_call → done · finish_reason=length → incomplete · max iterations → 508']], links:[['PR #623','https://github.com/praxis-proxy/ai/pull/623'],['Issue #26','https://github.com/praxis-proxy/ai/issues/26']] },
   f_trans: { t:'API translation', d:'Translates between client and provider formats — request, response, and stream — inside one process. Chunk boundaries and SSE semantics survive because no callout protocol carries the stream.', dt:[['Formats','OpenAI ↔ Anthropic Messages ↔ provider-native'],['Streaming','SSE-aware, in-process'],['Usage','extracted into the budget tree']] },
   f_guard: { t:'guardrails', d:'One guardrails filter on all paths — ingress, egress, in-stream, and inside loop iterations. Engines remain terminal services; the pipeline is where enforcement composes.', dt:[['Coverage','all paths, including in-stream and in-loop'],['Engines','NeMo Guardrails, TrustyAI detectors']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
   f_cred: { t:'credential injection', d:'Injects provider credentials per destination. Client credentials are never exposed; subrequests inherit injected credentials without bypass paths.', dt:[['Providers','OpenAI, Anthropic, Azure, Bedrock, Vertex'],['Pattern','BYOK · per-destination injection · rotation']] },
@@ -287,7 +287,7 @@ const tips = {
   svc_guardrails: { t:'NeMo Guardrails (engine)', d:'Guardrails engine — terminal service called by the guardrails filter.', dt:[['Called by','guardrails filter (all paths)'],['Terminal','serves evaluations — does not route']], links:[['NeMo Guardrails','https://github.com/NVIDIA/NeMo-Guardrails']] },
   svc_files: { t:'File Service (S3 / Vector Store)', d:'Terminal resource service for file_search, dispatched by responses_proxy tool execution.', dt:[['Called by','responses_proxy (tool dispatch)'],['Pattern','resource APIs behind Praxis']] },
   svc_websearch: { t:'Web Search', d:'Web search backend for the web_search tool. Terminal service.', dt:[['Status','Coming Soon']] },
-  svc_mcp: { t:'MCP Server', d:'External MCP server. Discovery and invocation dispatched by responses_proxy on the same identity spine — per-action authorization and unified audit apply.', dt:[['Called by','responses_proxy (discovery + invocation)'],['Protocol','MCP over SSE or stdio']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
+  svc_mcp: { t:'MCP Server', d:'External MCP server. Discovery (tools/list) by openai_mcp_tool_resolve on the request path; invocation (tools/call) by openai_mcp_dispatch on subrequest iterations — same identity spine, per-action authorization and unified audit.', dt:[['Discovery','openai_mcp_tool_resolve (tools/list → mcp_tool_map)'],['Invocation','openai_mcp_dispatch (tools/call → function_call_output + mcp_call)'],['Protocol','MCP over SSE or stdio']], links:[['MCP Protocol','https://modelcontextprotocol.io']] },
   svc_conv: { t:'Conversation Store', d:'Terminal storage for conversation items — loaded by rehydrate, appended by openai_conversations on the response path.', dt:[['Read','rehydrate (load items)'],['Write','openai_conversations (append-back)'],['Backend','SQLite / SQL']] },
   svc_resp_store: { t:'Response Store', d:'Terminal SQL persistence for response objects — written by openai_response_store, read by rehydrate for previous_response_id.', dt:[['Write','openai_response_store'],['Read','rehydrate (previous_response_id)'],['Retrieval','GET /v1/responses/{id}']] },
   sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction between prefill and decode workers.', dt:[['Role','transaction coordinator']] },
@@ -529,8 +529,8 @@ function drawBounds() {
   ctx.font = `italic ${ts(13)}px system-ui`;
   ctx.fillStyle = isDark ? '#d2a8ffaa' : '#8250dfaa';
   ctx.textAlign = 'left';
-  ctx.fillText('⟳ tool loop: branch chain rejoins at the filter named', tx(185), ty(645));
-  ctx.fillText('   "inference" · max_iterations bounded (proposal 00354)', tx(185), ty(663));
+  ctx.fillText('⟳ agentic loop: IRR subrequest rejoins at the filter named', tx(185), ty(645));
+  ctx.fillText('   "inference" · max_iterations bounded', tx(185), ty(663));
   ctx.font = `bold ${ts(10)}px system-ui`;
   ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
   ctx.fillText('request path ↓ · response path ↑ (append-back · persist)', tx(560), ty(228));
@@ -1039,7 +1039,7 @@ const A = (t, f, to, c, o, insp) => Object.assign({ t, mode: 'arrow', f, to, c }
 const L = (t, target, insp, o) => Object.assign({ t, mode: 'lightup', target }, o || {}, insp ? { insp } : {});
 
 // waypoint channels
-const wpRejoin = [{x: 530, y: 535}, {x: 530, y: 503}];            // tool_dispatch -> inference (branch rejoin)
+const wpRejoin = [{x: 530, y: 535}, {x: 530, y: 503}];            // agentic_loop -> inference (IRR rejoin)
 const wpProvBack = [{x: 508, y: 698}, {x: 508, y: 566}];          // provider -> translation
 
 function mkIntake(pathLabel, budgetLine, resolveCtx, fmt) {
@@ -1153,15 +1153,15 @@ function mkPass(iter, rebuildNote, provResp, outputItems, ctxAfter) {
       () => { setInspPhase('request'); inspHeaders = [{v: 'POST /v1/responses (in progress)', s: 'keep', id: 'h-prog'}]; bSet(outputItems); cSet(ctxAfter); }),
   ];
 }
-// tool_dispatch verdicts (proposed filter — proposal 00354)
+// agentic_loop verdicts (implemented — PR #623)
 const dispatchLoop = (what) =>
-  L('tool_dispatch: ' + what + ' → action="loop" (server-side tools only)', 'f_dispatch',
-    () => { cPush('tool_dispatch.action = "loop"'); });
+  L('agentic_loop: ' + what + ' → action="loop" (server-side tools)', 'f_dispatch',
+    () => { cPush('agentic_loop.action = "loop"'); });
 const rejoinArc =
-  A('⟳ branch chain rejoin: inference (max_iterations bounded)', 'f_dispatch', 'f_loop', '#d2a8ff', { fromLeft: true, waypoints: wpRejoin, toLeft: true });
+  A('⟳ IRR subrequest rejoin: inference (max_iterations bounded)', 'f_dispatch', 'f_loop', '#d2a8ff', { fromLeft: true, waypoints: wpRejoin, toLeft: true });
 const dispatchDone = (why) =>
-  L('tool_dispatch: ' + why + ' → action="done" (exit loop)', 'f_dispatch',
-    () => { cPush('tool_dispatch.action = "done"'); });
+  L('agentic_loop: ' + why + ' → action="done" (exit loop)', 'f_dispatch',
+    () => { cPush('agentic_loop.action = "done"'); });
 
 function mkRespIntake(budgetLine) {
   return [
@@ -1219,8 +1219,8 @@ const flowRespRag = [
     ['"output": [{"type":"file_search_call",...}]'],
     ['tool call: file_search']),
   dispatchLoop('file_search'),
-  A('tool_dispatch → File Service (vector search)', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → tool_dispatch (chunks + citations → messages)', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 },
+  A('agentic_loop → File Service (vector search)', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → agentic_loop (chunks + citations → accumulated_output)', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 },
     () => { bPush('"file_search_result": {chunks:[...], citations:[...]}'); }),
   rejoinArc,
   ...mkPass(2, 'rebuild with tool results appended',
@@ -1242,8 +1242,8 @@ const flowRespRag = [
 // ── Flow: MCP Agent Loop (streaming) ──
 const flowRespMcp = [
   ...mkRespIntake(),
-  L('openai_tool_parse: tools = [mcp] · stream=true', 'f_validate',
-    () => { cPush('has_tools = true'); cPush('is_streaming = true'); }),
+  L('openai_tool_parse: tools = [mcp] · mcp_tool_map pending', 'f_validate',
+    () => { cPush('has_tools = true'); cPush('has_mcp_tools = true'); }),
   L('openai_stream_events: SSE accumulation armed', 'f_store'),
   L('openai_mcp_tool_resolve: tools/list on upstream servers', 'f_fileres',
     () => { cPush('mcp_tool_map = ["get_weather","get_forecast"]'); }),
@@ -1254,10 +1254,10 @@ const flowRespMcp = [
     ['"output": [{"type":"mcp_call","name":"get_weather",...}]'],
     ['tool call: mcp get_weather']),
   A('semantic events stream to client throughout (gateway relays bytes)', 'gw', 'user', '#d2a8ff', { fromLeft: true, toRight: true, yOff: 18 }),
-  dispatchLoop('mcp call (same identity spine · per-action auth)'),
-  A('tool_dispatch → MCP Server (invoke)', 'f_dispatch', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('MCP Server → tool_dispatch (result → messages)', 'svc_mcp', 'f_dispatch', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 },
-    () => { bPush('"mcp_result": {"temp":"72F","condition":"sunny"}'); }),
+  dispatchLoop('mcp function_call → IRR subrequest'),
+  A('openai_mcp_dispatch → MCP Server (tools/call)', 'f_dispatch', 'svc_mcp', '#d2a8ff', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('MCP Server → openai_mcp_dispatch (function_call_output + mcp_call → accumulated_output)', 'svc_mcp', 'f_dispatch', '#d2a8ff', { fromRight: true, toLeft: true, yOff: 5 },
+    () => { bPush('"function_call_output": {"temp":"72F"}, "mcp_call": {server:"weather"}'); }),
   rejoinArc,
   ...mkPass(2, 'rebuild with tool results appended',
     ['"content": [{"type":"text","text":"72F and sunny..."}]', '"stop_reason": "end_turn"'],
@@ -1289,8 +1289,8 @@ const flowRespBg = [
     ['"output": [file_search_call]'],
     ['[async] tool call: file_search']),
   dispatchLoop('file_search'),
-  A('tool_dispatch → File Service', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
-  A('File Service → tool_dispatch', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
+  A('agentic_loop → File Service', 'f_dispatch', 'svc_files', '#3fb950', { fromLeft: true, toRight: true, yOff: -5 }),
+  A('File Service → agentic_loop', 'svc_files', 'f_dispatch', '#3fb950', { fromRight: true, toLeft: true, yOff: 5 }),
   rejoinArc,
   ...mkPass(2, 'rebuild with tool results appended',
     ['"content": [{"type":"text","text":"Analysis complete..."}]', '"stop_reason": "end_turn"'],
